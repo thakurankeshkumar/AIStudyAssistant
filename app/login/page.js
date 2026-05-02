@@ -46,26 +46,26 @@ export default function LoginPage() {
 	};
 
 	return (
-		<main className="relative min-h-screen overflow-hidden px-6 py-10 text-[var(--foreground)] lg:px-10">
-			<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(240,179,94,0.16),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(72,111,255,0.16),_transparent_28%)]" />
+		<main className="relative min-h-screen overflow-hidden px-6 py-10 text-foreground lg:px-10">
+			<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(240,179,94,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(72,111,255,0.16),transparent_28%)]" />
 			<div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
 				<section className="space-y-6">
-					<Link href="/" className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition hover:text-white">
+					<Link href="/" className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-white">
 						<span className="text-lg">←</span>
 						Back to landing
 					</Link>
-					<p className="text-xs uppercase tracking-[0.4em] text-[var(--muted)]">Welcome back</p>
+					<p className="text-xs uppercase tracking-[0.4em] text-muted">Welcome back</p>
 					<h1 className="max-w-xl text-5xl font-semibold leading-tight text-white md:text-6xl">
 						Log in and reopen your study workspace.
 					</h1>
-					<p className="max-w-xl text-base leading-8 text-[var(--muted)] md:text-lg">
+					<p className="max-w-xl text-base leading-8 text-muted md:text-lg">
 						Use the existing JWT-backed REST route to authenticate, then jump into your notes, uploads, and question flow.
 					</p>
 				</section>
 
-				<section className="rounded-[2rem] border border-white/10 bg-[var(--surface-strong)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur md:p-8">
+				<section className="rounded-4xl border border-white/10 bg-surface-strong p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur md:p-8">
 					<div className="border-b border-white/10 pb-5">
-						<p className="text-xs uppercase tracking-[0.35em] text-[var(--muted)]">Login</p>
+						<p className="text-xs uppercase tracking-[0.35em] text-muted">Login</p>
 						<h2 className="mt-2 text-3xl font-semibold text-white">Access your account</h2>
 					</div>
 
@@ -109,7 +109,7 @@ export default function LoginPage() {
 						</button>
 					</form>
 
-					<p className="mt-5 text-sm text-[var(--muted)]">
+					<p className="mt-5 text-sm text-muted">
 						Need an account?{" "}
 						<Link href="/signup" className="font-medium text-[#f0b35e] transition hover:text-[#ffbf71]">
 							Sign up here

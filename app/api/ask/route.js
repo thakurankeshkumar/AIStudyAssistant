@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/db";
 import Document from "@/models/Document";
 import { Groq } from "groq-sdk";
+import Chat from "@/models/Chat";
+import { getUserFromRequest } from "@/lib/auth";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -11,6 +13,11 @@ export async function POST(req) {
     await connectDB();
 
     const { fileId, question } = await req.json();
+    const userId = getUserFromRequest(req);
+
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!fileId || !question) {
       return Response.json(
@@ -55,6 +62,14 @@ export async function POST(req) {
     });
 
     const answer = response.choices[0]?.message?.content;
+    await Chat.create({
+      userId,
+      fileId,
+      messages: [
+        { role: "user", content: question },
+        { role: "assistant", content: answer },
+      ],
+    });
 
     return Response.json({ answer });
 

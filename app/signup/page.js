@@ -47,28 +47,28 @@ export default function SignupPage() {
 
 	return (
 		<main
-			className="relative min-h-screen overflow-hidden px-6 py-10 lg:px-10"
+			className="relative min-h-screen overflow-hidden px-6 py-10 text-foreground lg:px-10"
 			style={{ color: "var(--foreground)" }}
 		>
 			<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(240,179,94,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(72,111,255,0.16),transparent_28%)]" />
 			<div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
 				<section className="space-y-6">
-					<Link href="/" className="inline-flex items-center gap-2 text-sm text-(--muted) transition hover:text-white">
+					<Link href="/" className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-white">
 						<span className="text-lg">←</span>
 						Back to landing
 					</Link>
-					<p className="text-xs uppercase tracking-[0.4em] text-(--muted)">Create account</p>
+					<p className="text-xs uppercase tracking-[0.4em] text-muted">Create account</p>
 					<h1 className="max-w-xl text-5xl font-semibold leading-tight text-white md:text-6xl">
 						Start a clean, focused study session.
 					</h1>
-					<p className="max-w-xl text-base leading-8 text-(--muted) md:text-lg">
+					<p className="max-w-xl text-base leading-8 text-muted md:text-lg">
 						Signup uses the existing REST route, hashes the password, and sets the session cookie so you can move straight to the dashboard.
 					</p>
 				</section>
 
-				<section className="rounded-4xl border border-white/10 bg-(--surface-strong) p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur md:p-8">
+				<section className="rounded-4xl border border-white/10 bg-surface-strong p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur md:p-8">
 					<div className="border-b border-white/10 pb-5">
-						<p className="text-xs uppercase tracking-[0.35em] text-(--muted)">Signup</p>
+						<p className="text-xs uppercase tracking-[0.35em] text-muted">Signup</p>
 						<h2 className="mt-2 text-3xl font-semibold text-white">Create your account</h2>
 					</div>
 
@@ -112,7 +112,7 @@ export default function SignupPage() {
 						</button>
 					</form>
 
-					<p className="mt-5 text-sm text-(--muted)">
+					<p className="mt-5 text-sm text-muted">
 						Already have an account?{" "}
 						<Link href="/login" className="font-medium text-[#f0b35e] transition hover:text-[#ffbf71]">
 							Log in here

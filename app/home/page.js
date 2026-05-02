@@ -30,6 +30,7 @@ function previewMessage(messages) {
 
 export default function Home() {
   const fileInputRef = useRef(null);
+  const selectedChatIdRef = useRef("");
   const [file, setFile] = useState(null);
   const [fileId, setFileId] = useState("");
   const [question, setQuestion] = useState("");
@@ -43,6 +44,11 @@ export default function Home() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+
+  const selectChat = useCallback((chatId) => {
+    selectedChatIdRef.current = chatId;
+    setSelectedChatId(chatId);
+  }, []);
 
   const selectedChat = useMemo(
     () => history.find((chat) => chat._id === selectedChatId) || null,
@@ -90,21 +96,17 @@ export default function Home() {
         const chats = Array.isArray(data) ? data : [];
         setHistory(chats);
 
-        setSelectedChatId((currentSelectedChatId) => {
-          if (selectLatest) {
-            return chats[0]?._id || "";
-          }
+        const currentSelectedChatId = selectedChatIdRef.current;
+        const nextSelectedChatId = selectLatest
+          ? chats[0]?._id || ""
+          : currentSelectedChatId && chats.some((chat) => chat._id === currentSelectedChatId)
+            ? currentSelectedChatId
+            : chats[0]?._id || "";
 
-          if (!currentSelectedChatId) {
-            return chats[0]?._id || "";
-          }
+        selectChat(nextSelectedChatId);
 
-          if (!chats.some((chat) => chat._id === currentSelectedChatId)) {
-            return chats[0]?._id || "";
-          }
-
-          return currentSelectedChatId;
-        });
+        const nextSelectedChat = chats.find((chat) => chat._id === nextSelectedChatId) || null;
+        setFileId(nextSelectedChat?.fileId ? String(nextSelectedChat.fileId) : "");
 
         return chats;
       } catch (error) {
@@ -114,7 +116,7 @@ export default function Home() {
         setHistoryLoading(false);
       }
     },
-    []
+      [selectChat]
   );
 
   const createChat = useCallback(async () => {
@@ -139,7 +141,7 @@ export default function Home() {
       }
 
       const chatId = data.chatId || "";
-      setSelectedChatId(chatId);
+      selectChat(chatId);
       setAnswer("");
       setStatus("New chat created.");
       await loadHistory({ selectLatest: true });
@@ -150,7 +152,7 @@ export default function Home() {
     } finally {
       setCreatingChat(false);
     }
-  }, [loadHistory]);
+  }, [loadHistory, selectChat]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -190,9 +192,46 @@ export default function Home() {
         return;
       }
 
-      setFileId(data.fileId);
+      const uploadedFileId = String(data.fileId || "");
+      setFileId(uploadedFileId);
+
+      let chatId = selectedChatId;
+
+      if (!chatId) {
+        chatId = await createChat();
+
+        if (!chatId) {
+          return;
+        }
+      }
+
+      const chatResponse = await fetch("/api/chat/file", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          chatId,
+          fileId: uploadedFileId,
+        }),
+      });
+
+      const chatData = await chatResponse.json();
+
+      if (chatResponse.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      if (!chatResponse.ok) {
+        setStatus(chatData.error || "File uploaded, but could not attach it to the chat.");
+        return;
+      }
+
       setStatus("File uploaded successfully. You can now ask a question.");
       setAnswer("");
+      await loadHistory({ selectLatest: false });
     } catch (error) {
       setStatus(error.message || "Upload failed.");
     } finally {
@@ -247,8 +286,8 @@ export default function Home() {
 
       setAnswer(data.answer || "No answer returned.");
       setQuestion("");
-      setSelectedChatId(chatId);
-      await loadHistory({ selectLatest: true });
+      selectChat(chatId);
+      await loadHistory({ selectLatest: false });
     } catch (error) {
       setStatus(error.message || "Failed to get an answer.");
     } finally {
@@ -277,7 +316,7 @@ export default function Home() {
     setQuestion("");
     setAnswer("");
     setStatus("");
-    setSelectedChatId("");
+    selectChat("");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -347,7 +386,10 @@ export default function Home() {
                       <button
                         key={chat._id}
                         type="button"
-                        onClick={() => setSelectedChatId(chat._id)}
+                        onClick={() => {
+                          selectChat(chat._id);
+                          setFileId(chat.fileId ? String(chat.fileId) : "");
+                        }}
                         className={`w-full rounded-2xl border px-3 py-3 text-left transition ${
                           isSelected
                             ? "border-amber-400/40 bg-amber-400/10"
@@ -407,6 +449,11 @@ export default function Home() {
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
                   {history.length} chats saved
                 </span>
+                {selectedChat?.fileId ? (
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-400">
+                    File remembered for this chat
+                  </span>
+                ) : null}
                 {fileId ? (
                   <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-300">
                     PDF ready
@@ -489,7 +536,7 @@ export default function Home() {
                     disabled={uploading || !file}
                     className="rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-100 transition hover:border-amber-300/40 hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {uploading ? "Uploading..." : fileId ? "Re-upload PDF" : "Upload PDF"}
+                    {uploading ? "Uploading..." : selectedChat?.fileId ? "Replace chat PDF" : fileId ? "Re-upload PDF" : "Upload PDF"}
                   </button>
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
                     {file?.name || "No file attached"}

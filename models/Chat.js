@@ -13,6 +13,12 @@ const ChatSchema = new mongoose.Schema(
       default: "New Chat",
     },
 
+    fileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Document",
+      default: null,
+    },
+
     messages: [
       {
         role: {

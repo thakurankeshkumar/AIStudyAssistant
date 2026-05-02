@@ -19,14 +19,29 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!fileId || !question || !chatId) {
+    if (!question || !chatId) {
       return Response.json(
-        { error: "Missing fileId, question or chatId" },
+        { error: "Missing question or chatId" },
         { status: 400 }
       );
     }
 
-    const doc = await Document.findById(fileId);
+    const chat = await Chat.findOne({ _id: chatId, userId });
+
+    if (!chat) {
+      return Response.json({ error: "Chat not found" }, { status: 404 });
+    }
+
+    const activeFileId = fileId || chat.fileId;
+
+    if (!activeFileId) {
+      return Response.json(
+        { error: "Upload a PDF for this chat before asking a question" },
+        { status: 400 }
+      );
+    }
+
+    const doc = await Document.findById(activeFileId);
 
     if (!doc) {
       return Response.json({ error: "Document not found" }, { status: 404 });
@@ -66,6 +81,9 @@ export async function POST(req) {
           { role: "user", content: question },
           { role: "assistant", content: answer },
         ],
+      },
+      $set: {
+        fileId: activeFileId,
       },
     });
 

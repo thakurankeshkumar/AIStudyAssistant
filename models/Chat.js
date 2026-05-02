@@ -8,9 +8,9 @@ const ChatSchema = new mongoose.Schema(
       required: true,
     },
 
-    fileId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Document",
+    title: {
+      type: String,
+      default: "New Chat",
     },
 
     messages: [

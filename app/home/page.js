@@ -37,6 +37,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [creatingChat, setCreatingChat] = useState(false);
   const [status, setStatus] = useState("");
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -48,6 +49,8 @@ export default function Home() {
     [history, selectedChatId]
   );
 
+  const activeChatTitle = selectedChat?.title || "New chat";
+
   const visibleHistory = useMemo(() => {
     if (!searchTerm.trim()) {
       return history;
@@ -56,50 +59,98 @@ export default function Home() {
     const lowerCasedSearch = searchTerm.toLowerCase();
 
     return history.filter((chat) => {
-      const title = previewMessage(chat.messages).toLowerCase();
+      const title = (chat.title || previewMessage(chat.messages)).toLowerCase();
       const date = formatChatDate(chat.createdAt).toLowerCase();
 
       return title.includes(lowerCasedSearch) || date.includes(lowerCasedSearch);
     });
   }, [history, searchTerm]);
 
-  const loadHistory = useCallback(async ({ selectLatest = false } = {}) => {
-    setHistoryLoading(true);
+  const loadHistory = useCallback(
+    async ({ selectLatest = false } = {}) => {
+      setHistoryLoading(true);
+
+      try {
+        const response = await fetch("/api/chat/history", {
+          credentials: "include",
+        });
+
+        if (response.status === 401) {
+          window.location.assign("/login");
+          return [];
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setStatus(data.error || "Failed to load chat history.");
+          return [];
+        }
+
+        const chats = Array.isArray(data) ? data : [];
+        setHistory(chats);
+
+        setSelectedChatId((currentSelectedChatId) => {
+          if (selectLatest) {
+            return chats[0]?._id || "";
+          }
+
+          if (!currentSelectedChatId) {
+            return chats[0]?._id || "";
+          }
+
+          if (!chats.some((chat) => chat._id === currentSelectedChatId)) {
+            return chats[0]?._id || "";
+          }
+
+          return currentSelectedChatId;
+        });
+
+        return chats;
+      } catch (error) {
+        setStatus(error.message || "Failed to load chat history.");
+        return [];
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    []
+  );
+
+  const createChat = useCallback(async () => {
+    setCreatingChat(true);
 
     try {
-      const response = await fetch("/api/chat/history", {
+      const response = await fetch("/api/chat/create", {
+        method: "POST",
         credentials: "include",
       });
 
-      if (response.status === 401) {
-        window.location.assign("/login");
-        return [];
-      }
-
       const data = await response.json();
 
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return null;
+      }
+
       if (!response.ok) {
-        setStatus(data.error || "Failed to load chat history.");
-        return [];
+        setStatus(data.error || "Failed to create a chat.");
+        return null;
       }
 
-      const chats = Array.isArray(data) ? data : [];
-      setHistory(chats);
-
-      if (selectLatest || !selectedChatId) {
-        setSelectedChatId(chats[0]?._id || "");
-      } else if (selectedChatId && !chats.some((chat) => chat._id === selectedChatId)) {
-        setSelectedChatId(chats[0]?._id || "");
-      }
-
-      return chats;
+      const chatId = data.chatId || "";
+      setSelectedChatId(chatId);
+      setAnswer("");
+      setStatus("New chat created.");
+      await loadHistory({ selectLatest: true });
+      return chatId;
     } catch (error) {
-      setStatus(error.message || "Failed to load chat history.");
-      return [];
+      setStatus(error.message || "Failed to create a chat.");
+      return null;
     } finally {
-      setHistoryLoading(false);
+      setCreatingChat(false);
     }
-  }, [selectedChatId]);
+  }, [loadHistory]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -155,6 +206,16 @@ export default function Home() {
       return;
     }
 
+    let chatId = selectedChatId;
+
+    if (!chatId) {
+      chatId = await createChat();
+
+      if (!chatId) {
+        return;
+      }
+    }
+
     setLoading(true);
     setStatus("");
 
@@ -168,6 +229,7 @@ export default function Home() {
         body: JSON.stringify({
           fileId,
           question,
+          chatId,
         }),
       });
 
@@ -185,6 +247,7 @@ export default function Home() {
 
       setAnswer(data.answer || "No answer returned.");
       setQuestion("");
+      setSelectedChatId(chatId);
       await loadHistory({ selectLatest: true });
     } catch (error) {
       setStatus(error.message || "Failed to get an answer.");
@@ -208,16 +271,19 @@ export default function Home() {
     }
   };
 
-  const handleNewChat = () => {
+  const handleNewChat = async () => {
     setFile(null);
     setFileId("");
     setQuestion("");
     setAnswer("");
     setStatus("");
     setSelectedChatId("");
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+
+    await createChat();
   };
 
   const handleSend = async (event) => {
@@ -238,9 +304,10 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleNewChat}
-                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs font-medium text-white transition hover:border-amber-400/40 hover:bg-amber-400/10"
+                disabled={creatingChat}
+                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs font-medium text-white transition hover:border-amber-400/40 hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                New chat
+                {creatingChat ? "Creating..." : "New chat"}
               </button>
             </div>
 
@@ -270,6 +337,11 @@ export default function Home() {
                 <div className="space-y-2">
                   {visibleHistory.map((chat) => {
                     const isSelected = chat._id === selectedChatId;
+                    const preview = previewMessage(chat.messages);
+                    const title = chat.title || "New chat";
+                    const timestampLabel = Array.isArray(chat.messages) && chat.messages.length > 0
+                      ? formatChatDate(chat.updatedAt || chat.createdAt)
+                      : "Empty chat";
 
                     return (
                       <button
@@ -282,9 +354,12 @@ export default function Home() {
                             : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
                         }`}
                       >
-                        <p className="line-clamp-2 text-sm font-medium text-white">{previewMessage(chat.messages)}</p>
+                        <p className="line-clamp-1 text-[11px] uppercase tracking-[0.3em] text-slate-500">
+                          {title}
+                        </p>
+                        <p className="mt-2 line-clamp-2 text-sm font-medium text-white">{preview}</p>
                         <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-slate-400">
-                          <span>{formatChatDate(chat.createdAt)}</span>
+                          <span>{timestampLabel}</span>
                           <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 uppercase tracking-[0.22em]">
                             Chat
                           </span>
@@ -320,9 +395,12 @@ export default function Home() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">ChatGPT-style workspace</p>
-                <h2 className="mt-1 text-xl font-semibold text-white sm:text-2xl">
-                  {selectedChat ? previewMessage(selectedChat.messages) : "New chat"}
-                </h2>
+                <h2 className="mt-1 text-xl font-semibold text-white sm:text-2xl">{activeChatTitle}</h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                  {selectedChat
+                    ? previewMessage(selectedChat.messages)
+                    : "No chat selected yet. Start a new thread from the sidebar."}
+                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
@@ -447,10 +525,10 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || creatingChat}
                     className="flex h-14 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading ? "Thinking..." : "Send"}
+                    {loading ? "Thinking..." : creatingChat ? "Creating chat..." : "Send"}
                   </button>
                 </div>
               </form>

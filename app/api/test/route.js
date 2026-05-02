@@ -1,13 +1,15 @@
 import { connectDB } from "@/lib/db";
-import Document from "@/models/Document";
+import User from "@/models/User";
 
 export async function GET() {
   await connectDB();
 
-  const testDoc = await Document.create({
-    filename: "test.pdf",
-    chunks: ["This is a test chunk"],
-  });
+  const user =
+    (await User.findOne({ username: "testuser" })) ||
+    (await User.create({
+      username: "testuser",
+      password: "123456",
+    }));
 
-  return Response.json(testDoc);
+  return Response.json(user);
 }

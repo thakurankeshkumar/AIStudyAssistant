@@ -44,6 +44,9 @@ export default function Home() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [renamingChatId, setRenamingChatId] = useState("");
+  const [renameValue, setRenameValue] = useState("");
+  const [deletingChatId, setDeletingChatId] = useState("");
 
   const selectChat = useCallback((chatId) => {
     selectedChatIdRef.current = chatId;
@@ -287,11 +290,105 @@ export default function Home() {
       setAnswer(data.answer || "No answer returned.");
       setQuestion("");
       selectChat(chatId);
+
+      const selectedChatInHistory = history.find((chat) => chat._id === chatId);
+      if (selectedChatInHistory && selectedChatInHistory.title === "New Chat") {
+        const titleFromQuestion = question.substring(0, 60);
+        try {
+          await fetch("/api/chat/title", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              chatId,
+              title: titleFromQuestion,
+            }),
+          });
+        } catch (err) {
+          console.error("Failed to update chat title:", err);
+        }
+      }
+
       await loadHistory({ selectLatest: false });
     } catch (error) {
       setStatus(error.message || "Failed to get an answer.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteChat = async (chatId) => {
+    try {
+      const response = await fetch("/api/chat/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ chatId }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus(data.error || "Failed to delete chat.");
+        return;
+      }
+
+      if (selectedChatId === chatId) {
+        selectChat("");
+        setFileId("");
+      }
+
+      setDeletingChatId("");
+      setStatus("Chat deleted successfully.");
+      await loadHistory({ selectLatest: false });
+    } catch (error) {
+      setStatus(error.message || "Failed to delete chat.");
+    }
+  };
+
+  const handleRenameChat = async (chatId, newTitle) => {
+    if (!newTitle.trim()) {
+      setStatus("Chat name cannot be empty.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/chat/title", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ chatId, title: newTitle }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus(data.error || "Failed to rename chat.");
+        return;
+      }
+
+      setRenamingChatId("");
+      setRenameValue("");
+      setStatus("Chat renamed successfully.");
+      await loadHistory({ selectLatest: false });
+    } catch (error) {
+      setStatus(error.message || "Failed to rename chat.");
     }
   };
 
@@ -331,10 +428,10 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b0f17] text-slate-100">
-      <div className="flex min-h-screen flex-col lg:flex-row">
-        <aside className="border-b border-white/10 bg-[#0d121b] lg:min-h-screen lg:w-[320px] lg:border-b-0 lg:border-r">
-          <div className="flex h-full flex-col p-4">
+    <main className="h-screen overflow-hidden bg-[#0b0f17] text-slate-100">
+      <div className="flex h-full min-h-0 flex-col lg:flex-row">
+        <aside className="flex min-h-0 flex-col border-b border-white/10 bg-[#0d121b] lg:h-full lg:w-[320px] lg:border-b-0 lg:border-r">
+          <div className="flex min-h-0 flex-1 flex-col p-4">
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Study Assistant</p>
@@ -363,50 +460,116 @@ export default function Home() {
               </label>
             </div>
 
-            <div className="mt-4 min-h-0 flex-1 overflow-auto pr-1">
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-2">
               {historyLoading ? (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+                <div className="rounded-lg border border-white/5 bg-white/3 p-3 text-sm text-slate-500">
                   Loading chats...
                 </div>
               ) : visibleHistory.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-400">
+                <div className="rounded-lg border border-dashed border-white/10 bg-white/3 p-3 text-sm leading-6 text-slate-500">
                   No saved chats yet. Ask a question to create your first chat.
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {visibleHistory.map((chat) => {
                     const isSelected = chat._id === selectedChatId;
-                    const preview = previewMessage(chat.messages);
                     const title = chat.title || "New chat";
-                    const timestampLabel = Array.isArray(chat.messages) && chat.messages.length > 0
-                      ? formatChatDate(chat.updatedAt || chat.createdAt)
-                      : "Empty chat";
+                    const isRenaming = renamingChatId === chat._id;
 
                     return (
-                      <button
+                      <div
                         key={chat._id}
-                        type="button"
-                        onClick={() => {
-                          selectChat(chat._id);
-                          setFileId(chat.fileId ? String(chat.fileId) : "");
-                        }}
-                        className={`w-full rounded-2xl border px-3 py-3 text-left transition ${
+                        className={`group relative flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-200 ${
                           isSelected
-                            ? "border-amber-400/40 bg-amber-400/10"
-                            : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                            ? "border border-amber-400/20 bg-amber-400/10"
+                            : "border border-transparent hover:border-white/10 hover:bg-white/5"
                         }`}
                       >
-                        <p className="line-clamp-1 text-[11px] uppercase tracking-[0.3em] text-slate-500">
-                          {title}
-                        </p>
-                        <p className="mt-2 line-clamp-2 text-sm font-medium text-white">{preview}</p>
-                        <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-slate-400">
-                          <span>{timestampLabel}</span>
-                          <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 uppercase tracking-[0.22em]">
-                            Chat
-                          </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            selectChat(chat._id);
+                            setFileId(chat.fileId ? String(chat.fileId) : "");
+                          }}
+                          className="min-w-0 flex-1 truncate text-left text-sm leading-snug text-slate-200 hover:text-white"
+                        >
+                          {isRenaming ? (
+                            <input
+                              autoFocus
+                              type="text"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleRenameChat(chat._id, renameValue);
+                                } else if (e.key === "Escape") {
+                                  setRenamingChatId("");
+                                  setRenameValue("");
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full rounded border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-sm text-white outline-none"
+                            />
+                          ) : (
+                            title
+                          )}
+                        </button>
+
+                        <div className="hidden gap-1 group-hover:flex">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRenamingChatId(chat._id);
+                              setRenameValue(title);
+                            }}
+                            className="rounded p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
+                            title="Rename chat"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingChatId(chat._id);
+                            }}
+                            className="rounded p-1 text-slate-400 hover:bg-rose-400/20 hover:text-rose-400 transition"
+                            title="Delete chat"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
-                      </button>
+
+                        {deletingChatId === chat._id && (
+                          <div className="absolute left-0 right-0 top-0 bottom-0 flex items-center justify-center gap-2 rounded-lg bg-black/80 z-50">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteChat(chat._id);
+                              }}
+                              className="rounded px-2 py-1 text-xs font-medium bg-rose-500 text-white hover:bg-rose-600"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingChatId("");
+                              }}
+                              className="rounded px-2 py-1 text-xs font-medium bg-slate-600 text-white hover:bg-slate-700"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -432,7 +595,7 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className="flex min-w-0 flex-1 flex-col bg-[#0b0f17]">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0b0f17]">
           <header className="border-b border-white/10 bg-[#0b0f17]/95 px-4 py-4 backdrop-blur lg:px-8">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -467,8 +630,8 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 overflow-auto px-4 py-6 lg:px-8">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 lg:px-8">
               <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
                 {selectedChat ? (
                   selectedChat.messages?.length > 0 ? (
@@ -517,7 +680,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="border-t border-white/10 bg-[#0c111a]/95 px-4 py-4 backdrop-blur lg:px-8">
+            <div className="shrink-0 border-t border-white/10 bg-[#0c111a]/95 px-4 py-4 backdrop-blur lg:px-8">
               <form
                 onSubmit={handleSend}
                 className="mx-auto flex w-full max-w-4xl flex-col gap-3 rounded-[1.75rem] border border-white/10 bg-[#101624] p-3 shadow-2xl shadow-black/30"

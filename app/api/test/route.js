@@ -1,7 +1,13 @@
 import { connectDB } from "@/lib/db";
+import Document from "@/models/Document";
 
 export async function GET() {
   await connectDB();
-  console.log("DB connected successfully");
-  return Response.json({ message: "DB connected successfully" });
+
+  const testDoc = await Document.create({
+    filename: "test.pdf",
+    chunks: ["This is a test chunk"],
+  });
+
+  return Response.json(testDoc);
 }

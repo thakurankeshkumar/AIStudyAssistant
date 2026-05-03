@@ -58,7 +58,7 @@ export async function POST(req) {
     Answer the question:
     ${question}
 
-    If the answer is not in the material, say "Not found in document".
+    the answer should be short and clean answer so that easy to understand and if the answer is not present or related to the material then also answer it based on you information and it should be accurate ".
     `;
 
     const response = await groq.chat.completions.create({

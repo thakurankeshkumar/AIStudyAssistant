@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import Chat from "@/models/Chat";
+import User from "@/models/User";
 import { getUserFromRequest } from "@/lib/auth";
 
 export async function POST(req) {
@@ -20,6 +21,10 @@ export async function POST(req) {
             userId,
             title: "New Chat", // ✅ Fix 2
             messages: [],
+        });
+
+        await User.findByIdAndUpdate(userId, {
+            $inc: { "stats.chatsCreated": 1 },
         });
 
         return Response.json({ chatId: chat._id });

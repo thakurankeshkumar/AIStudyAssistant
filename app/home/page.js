@@ -1,11 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function formatChatDate(value) {
   if (!value) {
     return "Just now";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "Unknown";
   }
 
   return new Intl.DateTimeFormat("en", {
@@ -28,9 +38,48 @@ function previewMessage(messages) {
   return firstUserMessage.content;
 }
 
+function getWelcomeCopy(name) {
+  const hour = new Date().getHours();
+  const safeName = name || "there";
+
+  if (hour >= 5 && hour < 10) {
+    return {
+      greeting: `Good morning, ${safeName}.`,
+      message: "Start light, stay focused, and make this session count.",
+    };
+  }
+
+  if (hour >= 10 && hour < 14) {
+    return {
+      greeting: `Good late morning, ${safeName}.`,
+      message: "Perfect time to read, revise, and clear tricky concepts.",
+    };
+  }
+
+  if (hour >= 14 && hour < 18) {
+    return {
+      greeting: `Good afternoon, ${safeName}.`,
+      message: "Keep the momentum going and turn your notes into answers.",
+    };
+  }
+
+  if (hour >= 18 && hour < 22) {
+    return {
+      greeting: `Good evening, ${safeName}.`,
+      message: "A calm review session can still unlock big progress.",
+    };
+  }
+
+  return {
+    greeting: `Good night, ${safeName}.`,
+    message: "Late hours are great for one focused question at a time.",
+  };
+}
+
 export default function Home() {
   const fileInputRef = useRef(null);
   const selectedChatIdRef = useRef("");
+  const loadHistoryRef = useRef(null);
   const [file, setFile] = useState(null);
   const [fileId, setFileId] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -45,15 +94,37 @@ export default function Home() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [renamingChatId, setRenamingChatId] = useState("");
-  const [renameValue, setRenameValue] = useState("");
   const [deletingChatId, setDeletingChatId] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
+  const [settingsData, setSettingsData] = useState(null);
+  const [settingsSection, setSettingsSection] = useState("General");
+  const [settingsDeletingChatId, setSettingsDeletingChatId] = useState("");
+  const [settingsDeletingAccount, setSettingsDeletingAccount] = useState(false);
+  const [settingsResettingStats, setSettingsResettingStats] = useState(false);
+  const [settingsGeneralMessage, setSettingsGeneralMessage] = useState("");
+  const [settingsGeneralError, setSettingsGeneralError] = useState("");
+  const [settingsNameInput, setSettingsNameInput] = useState("");
+  const [settingsOldPassword, setSettingsOldPassword] = useState("");
+  const [settingsNewPassword, setSettingsNewPassword] = useState("");
+  const [settingsConfirmPassword, setSettingsConfirmPassword] = useState("");
+  const [settingsUpdatingAccount, setSettingsUpdatingAccount] = useState(false);
+  const [settingsUpdateMessage, setSettingsUpdateMessage] = useState("");
+  const [settingsUpdateError, setSettingsUpdateError] = useState("");
+  const [settingsDialog, setSettingsDialog] = useState(null);
 
   const starterPrompts = [
     "Summarize this PDF in simple words",
     "Explain the key topics from the uploaded document",
     "Create short exam questions from this file",
     "Give me a quick revision plan from this PDF",
+  ];
+
+  const settingsSections = [
+    "General",
+    "Chats",
+    "Account",
   ];
 
   const selectChat = useCallback((chatId) => {
@@ -68,6 +139,95 @@ export default function Home() {
 
   const activeChatTitle = selectedChat?.title || "New chat";
   const showWelcomePanel = !selectedChat || (selectedChat.messages?.length || 0) === 0;
+  const welcomeCopy = useMemo(() => getWelcomeCopy(displayName), [displayName]);
+
+  const refreshSettingsData = useCallback(async () => {
+    setSettingsLoading(true);
+
+    try {
+      const response = await fetch("/api/account/stats", {
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setSettingsError(payload.error || "Failed to load settings.");
+        return;
+      }
+
+      setSettingsData(payload);
+      setSettingsNameInput(payload?.profile?.name || "");
+      setSettingsError("");
+    } catch (requestError) {
+      setSettingsError(requestError.message || "Failed to load settings.");
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
+
+  const openSettings = useCallback(async () => {
+    setSettingsSection("General");
+    setSettingsGeneralMessage("");
+    setSettingsGeneralError("");
+    setShowSettings(true);
+    await refreshSettingsData();
+  }, [refreshSettingsData]);
+
+  const closeSettingsDialog = useCallback(() => {
+    setSettingsDialog(null);
+  }, []);
+
+  const openSettingsDialog = useCallback((config) => {
+    setSettingsDialog(config);
+  }, []);
+
+  const runSettingsDialog = useCallback(async () => {
+    if (!settingsDialog) {
+      return;
+    }
+
+    const dialog = settingsDialog;
+    closeSettingsDialog();
+    if (dialog.mode === "rename") {
+      try {
+        const response = await fetch("/api/chat/title", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ chatId: dialog.chatId, title: dialog.value || "" }),
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+
+        if (!response.ok) {
+          setStatus(data.error || "Failed to rename chat.");
+          return;
+        }
+
+        setStatus("Chat renamed successfully.");
+        await loadHistoryRef.current?.({ selectLatest: false });
+      } catch (error) {
+        setStatus(error.message || "Failed to rename chat.");
+      }
+      return;
+    }
+
+    const action = dialog.action;
+    await action();
+  }, [closeSettingsDialog, settingsDialog]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -156,6 +316,176 @@ export default function Home() {
     },
       [selectChat]
   );
+
+  useEffect(() => {
+    loadHistoryRef.current = loadHistory;
+  }, [loadHistory]);
+
+  const handleSettingsDeleteChat = async (chatId) => {
+    setSettingsDeletingChatId(chatId);
+
+    try {
+      const response = await fetch("/api/chat/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ chatId }),
+      });
+
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      if (response.ok) {
+        await Promise.all([refreshSettingsData(), loadHistory({ selectLatest: false })]);
+      }
+    } finally {
+      setSettingsDeletingChatId("");
+    }
+  };
+
+  const handleSettingsDeleteAccount = async () => {
+    setSettingsDeletingAccount(true);
+
+    try {
+      const response = await fetch("/api/account/delete", {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      window.location.assign("/");
+    } catch {
+      setSettingsDeletingAccount(false);
+    }
+  };
+
+  const handleSettingsResetStats = async () => {
+    setSettingsResettingStats(true);
+    setSettingsGeneralError("");
+    setSettingsGeneralMessage("");
+
+    try {
+      const response = await fetch("/api/account/reset-stats", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setSettingsGeneralError(payload.error || "Failed to reset stats.");
+        return;
+      }
+
+      setSettingsGeneralMessage(payload.message || "Stats reset successfully.");
+      await refreshSettingsData();
+    } catch (requestError) {
+      setSettingsGeneralError(requestError.message || "Failed to reset stats.");
+    } finally {
+      setSettingsResettingStats(false);
+    }
+  };
+
+  const submitSettingsAccountUpdate = useCallback(async ({ name, oldPassword, newPassword }) => {
+    const response = await fetch("/api/account/update", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        name,
+        oldPassword,
+        newPassword,
+      }),
+    });
+
+    if (response.status === 401) {
+      window.location.assign("/login");
+      return;
+    }
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error || "Failed to update account.");
+    }
+
+    if (payload?.profile?.name) {
+      setDisplayName(payload.profile.name);
+    }
+
+    setSettingsOldPassword("");
+    setSettingsNewPassword("");
+    setSettingsConfirmPassword("");
+    setSettingsUpdateMessage(payload.message || "Account updated successfully.");
+
+    await refreshSettingsData();
+  }, [refreshSettingsData]);
+
+  const handleSettingsAccountUpdate = async (event) => {
+    event.preventDefault();
+    setSettingsUpdateError("");
+    setSettingsUpdateMessage("");
+
+    const trimmedName = settingsNameInput.trim();
+    const wantsPasswordChange = Boolean(settingsOldPassword || settingsNewPassword || settingsConfirmPassword);
+
+    if (!trimmedName && !wantsPasswordChange) {
+      setSettingsUpdateError("Enter a name or password change details.");
+      return;
+    }
+
+    if (wantsPasswordChange) {
+      if (!settingsOldPassword || !settingsNewPassword || !settingsConfirmPassword) {
+        setSettingsUpdateError("Fill old password, new password, and confirm password.");
+        return;
+      }
+
+      if (settingsNewPassword !== settingsConfirmPassword) {
+        setSettingsUpdateError("New password and confirm password do not match.");
+        return;
+      }
+    }
+
+    openSettingsDialog({
+      mode: "confirm",
+      title: "Update account?",
+      description: wantsPasswordChange
+        ? "This will update your name and password after you confirm it one more time."
+        : `This will update your name to ${trimmedName}.`,
+      confirmLabel: "Update account",
+      variant: "warning",
+      action: async () => {
+        setSettingsUpdatingAccount(true);
+
+        try {
+          await submitSettingsAccountUpdate({
+            name: trimmedName || undefined,
+            oldPassword: wantsPasswordChange ? settingsOldPassword : undefined,
+            newPassword: wantsPasswordChange ? settingsNewPassword : undefined,
+          });
+        } catch (requestError) {
+          setSettingsUpdateError(requestError.message || "Failed to update account.");
+        } finally {
+          setSettingsUpdatingAccount(false);
+        }
+      },
+    });
+  };
 
   const createChat = useCallback(async () => {
     setCreatingChat(true);
@@ -390,43 +720,6 @@ export default function Home() {
     }
   };
 
-  const handleRenameChat = async (chatId, newTitle) => {
-    if (!newTitle.trim()) {
-      setStatus("Chat name cannot be empty.");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/chat/title", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ chatId, title: newTitle }),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401) {
-        window.location.assign("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        setStatus(data.error || "Failed to rename chat.");
-        return;
-      }
-
-      setRenamingChatId("");
-      setRenameValue("");
-      setStatus("Chat renamed successfully.");
-      await loadHistory({ selectLatest: false });
-    } catch (error) {
-      setStatus(error.message || "Failed to rename chat.");
-    }
-  };
-
   const handleLogout = async () => {
     setLoggingOut(true);
 
@@ -509,7 +802,6 @@ export default function Home() {
                   {visibleHistory.map((chat) => {
                     const isSelected = chat._id === selectedChatId;
                     const title = chat.title || "New chat";
-                    const isRenaming = renamingChatId === chat._id;
 
                     return (
                       <div
@@ -528,26 +820,7 @@ export default function Home() {
                           }}
                           className="min-w-0 flex-1 truncate text-left text-sm leading-snug text-slate-200 hover:text-white"
                         >
-                          {isRenaming ? (
-                            <input
-                              autoFocus
-                              type="text"
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  handleRenameChat(chat._id, renameValue);
-                                } else if (e.key === "Escape") {
-                                  setRenamingChatId("");
-                                  setRenameValue("");
-                                }
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-full rounded border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-sm text-white outline-none"
-                            />
-                          ) : (
-                            title
-                          )}
+                          {title}
                         </button>
 
                         <div className="hidden gap-1 group-hover:flex">
@@ -555,8 +828,15 @@ export default function Home() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setRenamingChatId(chat._id);
-                              setRenameValue(title);
+                              openSettingsDialog({
+                                mode: "rename",
+                                title: "Rename chat",
+                                description: "Enter a new title for this chat.",
+                                confirmLabel: "Rename",
+                                variant: "warning",
+                                chatId: chat._id,
+                                value: title,
+                              });
                             }}
                             className="rounded p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
                             title="Rename chat"
@@ -614,18 +894,19 @@ export default function Home() {
             <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
               <button
                 type="button"
+                onClick={() => void openSettings()}
+                className="w-full rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
+              >
+                Settings
+              </button>
+              <button
+                type="button"
                 onClick={handleLogout}
                 disabled={loggingOut}
                 className="w-full rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm font-medium text-rose-100 transition hover:border-rose-300/40 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loggingOut ? "Logging out..." : "Logout"}
               </button>
-              <Link
-                href="/"
-                className="block w-full rounded-full border border-white/10 bg-black/20 px-4 py-2 text-center text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
-              >
-                Landing
-              </Link>
             </div>
           </div>
         </aside>
@@ -674,10 +955,10 @@ export default function Home() {
                       <div className="space-y-3">
                         <p className="text-sm uppercase tracking-[0.4em] text-slate-500">Study Assistant</p>
                         <h3 className="text-3xl font-semibold text-white sm:text-4xl">
-                          Hey, {displayName || "there"}. Ready to dive in?
+                          {welcomeCopy.greeting}
                         </h3>
                         <p className="mx-auto max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
-                          Ask anything about your PDF, start a new chat, or pick one of these quick ideas to begin.
+                          {welcomeCopy.message}
                         </p>
                       </div>
 
@@ -795,6 +1076,372 @@ export default function Home() {
           </div>
         </section>
       </div>
+
+      {showSettings ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md">
+          <div className="relative flex h-[min(86vh,760px)] w-full max-w-7xl overflow-hidden rounded-4xl border border-white/10 bg-[#0d121b]/95 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+            <button
+              type="button"
+              onClick={() => setShowSettings(false)}
+              className="absolute right-4 top-4 z-10 rounded-full border border-white/10 bg-black/30 px-3 py-2 text-xs text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            >
+              Close
+            </button>
+
+            <aside className="flex w-65 shrink-0 flex-col border-r border-white/10 bg-[#0c1118] p-4">
+              <div className="mb-4 pr-16">
+                <p className="text-[10px] uppercase tracking-[0.38em] text-slate-500">Settings</p>
+                <h3 className="mt-2 text-2xl font-semibold text-white">Account</h3>
+                <p className="mt-2 text-sm text-slate-400">Manage your chats, usage, and account controls.</p>
+              </div>
+
+              <nav className="space-y-1 overflow-y-auto pr-1">
+                {settingsSections.map((section) => (
+                  <button
+                    key={section}
+                    type="button"
+                    onClick={() => setSettingsSection(section)}
+                    className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm transition ${
+                      settingsSection === section
+                        ? "bg-white/10 text-white"
+                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <span>{section}</span>
+                    <span className="text-xs uppercase tracking-[0.28em] text-slate-500">Open</span>
+                  </button>
+                ))}
+              </nav>
+
+              <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Profile</p>
+                <p className="mt-2 text-base font-medium text-white">{settingsData?.profile?.name || displayName || "User"}</p>
+                <p className="mt-1 break-all text-sm leading-5 text-slate-400">@{settingsData?.profile?.username || "unknown"}</p>
+                <p className="mt-2 text-xs text-slate-500">
+                  Joined {formatDate(settingsData?.profile?.createdAt)}
+                </p>
+              </div>
+            </aside>
+
+            <section className="min-w-0 flex-1 overflow-hidden bg-[#0b0f17]">
+              <div className="flex h-full min-h-0 flex-col">
+                <header className="border-b border-white/10 px-6 py-5">
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Control center</p>
+                  <h4 className="mt-2 text-2xl font-semibold text-white">{settingsSection}</h4>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Control your account from one floating panel while keeping the chat visible behind it.
+                  </p>
+                </header>
+
+                <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+                  {settingsLoading ? (
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-400">
+                      Loading account settings...
+                    </div>
+                  ) : settingsError ? (
+                    <div className="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100">
+                      {settingsError}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {settingsSection === "General" ? (
+                        <>
+                          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                            {[
+                              { label: "Chats created", value: settingsData?.stats?.chatsCreated || 0 },
+                              { label: "Chats deleted", value: settingsData?.stats?.chatsDeleted || 0 },
+                              { label: "Files uploaded", value: settingsData?.stats?.filesUploaded || 0 },
+                              { label: "Active chats", value: settingsData?.stats?.activeChats || 0 },
+                            ].map((item) => (
+                              <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{item.label}</p>
+                                <p className="mt-3 text-4xl font-semibold text-white">{item.value}</p>
+                              </div>
+                            ))}
+                          </section>
+
+                          <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Stats controls</p>
+                                <h5 className="mt-2 text-xl font-semibold text-white">Reset usage stats</h5>
+                                <p className="mt-2 text-sm text-slate-400">
+                                  This resets chat/file counters to zero without deleting your chats or files.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openSettingsDialog({
+                                    title: "Reset stats?",
+                                    description:
+                                      "This will set your usage counters back to zero. Your chats and uploaded files will stay intact.",
+                                    confirmLabel: "Reset stats",
+                                    variant: "warning",
+                                    action: handleSettingsResetStats,
+                                  })
+                                }
+                                disabled={settingsResettingStats}
+                                className="rounded-full border border-amber-300/30 bg-amber-400/15 px-4 py-2.5 text-sm font-medium text-amber-50 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {settingsResettingStats ? "Resetting..." : "Reset stats"}
+                              </button>
+                            </div>
+
+                            {settingsGeneralError ? (
+                              <p className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                                {settingsGeneralError}
+                              </p>
+                            ) : null}
+
+                            {settingsGeneralMessage ? (
+                              <p className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                                {settingsGeneralMessage}
+                              </p>
+                            ) : null}
+                          </section>
+
+                          <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Overview</p>
+                                <h5 className="mt-2 text-xl font-semibold text-white">Your account summary</h5>
+                              </div>
+                              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-slate-400">
+                                Created {formatDate(settingsData?.profile?.createdAt)}
+                              </span>
+                            </div>
+
+                            <div className="mt-5 grid gap-3 md:grid-cols-2">
+                              <div className="rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
+                                <p className="text-sm text-slate-400">Name</p>
+                                <p className="mt-1 text-base text-white">{settingsData?.profile?.name || displayName || "User"}</p>
+                              </div>
+                              <div className="rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
+                                <p className="text-sm text-slate-400">Username</p>
+                                <p className="mt-1 text-base text-white">{settingsData?.profile?.username || "unknown"}</p>
+                              </div>
+                            </div>
+                          </section>
+                        </>
+                      ) : null}
+
+                      {settingsSection === "Chats" ? (
+                        <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Chats</p>
+                              <h5 className="mt-2 text-xl font-semibold text-white">Manage stored chat history</h5>
+                            </div>
+                            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-slate-400">
+                              {settingsData?.chats?.length || 0} chats
+                            </span>
+                          </div>
+
+                          <div className="mt-4 space-y-2">
+                            {(settingsData?.chats || []).length === 0 ? (
+                              <div className="rounded-2xl border border-dashed border-white/10 bg-[#0b0f17] p-5 text-sm text-slate-400">
+                                No chats saved yet.
+                              </div>
+                            ) : (
+                              settingsData.chats.map((chat) => (
+                                <div
+                                  key={chat._id}
+                                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3"
+                                >
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-white">{chat.title || "New chat"}</p>
+                                    <p className="text-xs text-slate-500">Updated {formatDate(chat.updatedAt)}</p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openSettingsDialog({
+                                        title: "Delete chat?",
+                                        description:
+                                          "This removes the selected chat and will also delete its attached document if no other chat is using it.",
+                                        confirmLabel: "Delete chat",
+                                        variant: "danger",
+                                        action: () => handleSettingsDeleteChat(chat._id),
+                                      })
+                                    }
+                                    disabled={settingsDeletingChatId === chat._id}
+                                    className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs font-medium text-rose-100 transition hover:border-rose-300/40 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {settingsDeletingChatId === chat._id ? "Deleting..." : "Delete"}
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </section>
+                      ) : null}
+
+                      {settingsSection === "Account" ? (
+                        <div className="space-y-6">
+                          <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                            <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Profile settings</p>
+                            <h5 className="mt-2 text-xl font-semibold text-white">Change name and password</h5>
+                            <p className="mt-2 text-sm text-slate-400">
+                              To change password, enter your current password first.
+                            </p>
+
+                            <form className="mt-5 space-y-4" onSubmit={handleSettingsAccountUpdate}>
+                              <label className="block space-y-2">
+                                <span className="text-sm text-slate-300">Name</span>
+                                <input
+                                  type="text"
+                                  value={settingsNameInput}
+                                  onChange={(event) => setSettingsNameInput(event.target.value)}
+                                  className="w-full rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/50"
+                                  placeholder="Your name"
+                                />
+                              </label>
+
+                              <div className="grid gap-3 md:grid-cols-2">
+                                <label className="block space-y-2">
+                                  <span className="text-sm text-slate-300">Old password</span>
+                                  <input
+                                    type="password"
+                                    value={settingsOldPassword}
+                                    onChange={(event) => setSettingsOldPassword(event.target.value)}
+                                    className="w-full rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/50"
+                                    placeholder="Current password"
+                                  />
+                                </label>
+
+                                <label className="block space-y-2">
+                                  <span className="text-sm text-slate-300">New password</span>
+                                  <input
+                                    type="password"
+                                    value={settingsNewPassword}
+                                    onChange={(event) => setSettingsNewPassword(event.target.value)}
+                                    className="w-full rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/50"
+                                    placeholder="New password"
+                                  />
+                                </label>
+                              </div>
+
+                              <label className="block space-y-2">
+                                <span className="text-sm text-slate-300">Confirm new password</span>
+                                <input
+                                  type="password"
+                                  value={settingsConfirmPassword}
+                                  onChange={(event) => setSettingsConfirmPassword(event.target.value)}
+                                  className="w-full rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/50"
+                                  placeholder="Confirm new password"
+                                />
+                              </label>
+
+                              {settingsUpdateError ? (
+                                <p className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                                  {settingsUpdateError}
+                                </p>
+                              ) : null}
+
+                              {settingsUpdateMessage ? (
+                                <p className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                                  {settingsUpdateMessage}
+                                </p>
+                              ) : null}
+
+                              <button
+                                type="submit"
+                                disabled={settingsUpdatingAccount}
+                                className="rounded-full border border-amber-300/30 bg-amber-400/15 px-4 py-2.5 text-sm font-medium text-amber-50 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {settingsUpdatingAccount ? "Updating..." : "Update account"}
+                              </button>
+                            </form>
+                          </section>
+
+                          <section className="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-5">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.32em] text-rose-200/70">Danger zone</p>
+                                <h5 className="mt-2 text-xl font-semibold text-white">Delete your account</h5>
+                                <p className="mt-2 text-sm text-rose-100/80">
+                                  This removes your profile, all chats, and uploaded files permanently.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openSettingsDialog({
+                                    title: "Delete account?",
+                                    description:
+                                      "This permanently deletes your account, chats, and uploaded files. This action cannot be undone.",
+                                    confirmLabel: "Delete account",
+                                    variant: "danger",
+                                    action: handleSettingsDeleteAccount,
+                                  })
+                                }
+                                disabled={settingsDeletingAccount}
+                                className="rounded-full border border-rose-300/30 bg-rose-500/20 px-4 py-2.5 text-sm font-medium text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {settingsDeletingAccount ? "Deleting..." : "Delete account"}
+                              </button>
+                            </div>
+                          </section>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      ) : null}
+
+      {settingsDialog ? (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-4xl border border-white/10 bg-[#0d121b]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+            <p className="text-xs uppercase tracking-[0.38em] text-slate-500">Confirmation</p>
+            <h3 className="mt-3 text-2xl font-semibold text-white">{settingsDialog.title}</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-400">{settingsDialog.description}</p>
+
+            {settingsDialog.mode === "rename" ? (
+              <label className="mt-5 block space-y-2">
+                <span className="text-sm text-slate-300">Chat name</span>
+                <input
+                  autoFocus
+                  type="text"
+                  value={settingsDialog.value || ""}
+                  onChange={(event) =>
+                    setSettingsDialog((currentDialog) =>
+                      currentDialog ? { ...currentDialog, value: event.target.value } : currentDialog
+                    )
+                  }
+                  className="w-full rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/50"
+                  placeholder="Enter chat name"
+                />
+              </label>
+            ) : null}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeSettingsDialog}
+                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void runSettingsDialog()}
+                className={`rounded-full px-4 py-2 text-sm font-medium text-white transition ${
+                  settingsDialog.variant === "danger"
+                    ? "border border-rose-300/30 bg-rose-500/20 hover:bg-rose-500/30"
+                    : "border border-amber-300/30 bg-amber-400/15 hover:bg-amber-400/25"
+                }`}
+              >
+                {settingsDialog.confirmLabel || "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

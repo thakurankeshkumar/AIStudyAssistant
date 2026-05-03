@@ -1,11 +1,19 @@
 import { connectDB } from "@/lib/db";
 import Document from "@/models/Document";
+import User from "@/models/User";
+import { getUserFromRequest } from "@/lib/auth";
 import { PDFParse } from "pdf-parse";
 import "pdfjs-dist/legacy/build/pdf.worker.mjs";
 
 export async function POST(req) {
     try {
         await connectDB();
+
+        const userId = getUserFromRequest(req);
+
+        if (!userId) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
         const contentType = req.headers.get("content-type") || "";
         let fileName = "uploaded.pdf";
@@ -90,8 +98,13 @@ export async function POST(req) {
             .match(/.{1,1000}/g) || [];
 
         const doc = await Document.create({
+            userId,
             filename: fileName,
             chunks,
+        });
+
+        await User.findByIdAndUpdate(userId, {
+            $inc: { "stats.filesUploaded": 1 },
         });
 
         return Response.json({

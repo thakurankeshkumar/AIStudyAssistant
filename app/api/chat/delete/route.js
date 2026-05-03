@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import Chat from "@/models/Chat";
 import Document from "@/models/Document";
+import User from "@/models/User";
 import { getUserFromRequest } from "@/lib/auth";
 
 export async function DELETE(req) {
@@ -46,6 +47,10 @@ export async function DELETE(req) {
         await Document.findByIdAndDelete(fileId);
       }
     }
+
+    await User.findByIdAndUpdate(userId, {
+      $inc: { "stats.chatsDeleted": 1 },
+    });
 
     return Response.json({ success: true, message: "Chat and associated document deleted" });
   } catch (error) {

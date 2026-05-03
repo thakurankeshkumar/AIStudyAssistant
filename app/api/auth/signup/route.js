@@ -33,6 +33,11 @@ export async function POST(req) {
       name,
       username,
       password: hashedPassword,
+      stats: {
+        chatsCreated: 0,
+        chatsDeleted: 0,
+        filesUploaded: 0,
+      },
     });
 
     // 🔹 Create JWT

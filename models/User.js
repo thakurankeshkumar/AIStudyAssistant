@@ -17,6 +17,21 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
+    stats: {
+      chatsCreated: {
+        type: Number,
+        default: 0,
+      },
+      chatsDeleted: {
+        type: Number,
+        default: 0,
+      },
+      filesUploaded: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,

@@ -93,7 +93,9 @@ export default function Home() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [selectedChatId, setSelectedChatId] = useState("");
+  const [isDraftChat, setIsDraftChat] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const statusTimerRef = useRef(null);
   const [deletingChatId, setDeletingChatId] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -127,9 +129,44 @@ export default function Home() {
     "Account",
   ];
 
+  const clearPendingFileSelection = useCallback(() => {
+    setFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
   const selectChat = useCallback((chatId) => {
+    clearPendingFileSelection();
     selectedChatIdRef.current = chatId;
     setSelectedChatId(chatId);
+    setIsDraftChat(chatId === "");
+  }, [clearPendingFileSelection]);
+
+  const dismissStatus = useCallback(() => {
+    if (statusTimerRef.current) {
+      clearTimeout(statusTimerRef.current);
+      statusTimerRef.current = null;
+    }
+    setStatus("");
+  }, []);
+
+  const showStatus = useCallback((message, autoDismiss = true) => {
+    // always clear existing
+    if (statusTimerRef.current) {
+      clearTimeout(statusTimerRef.current);
+      statusTimerRef.current = null;
+    }
+
+    setStatus(message);
+
+    if (autoDismiss && message) {
+      statusTimerRef.current = setTimeout(() => {
+        setStatus("");
+        statusTimerRef.current = null;
+      }, 2000);
+    }
   }, []);
 
   const selectedChat = useMemo(
@@ -213,21 +250,21 @@ export default function Home() {
         }
 
         if (!response.ok) {
-          setStatus(data.error || "Failed to rename chat.");
+          showStatus(data.error || "Failed to rename chat.");
           return;
         }
 
-        setStatus("Chat renamed successfully.");
+        showStatus("Chat renamed successfully.");
         await loadHistoryRef.current?.({ selectLatest: false });
       } catch (error) {
-        setStatus(error.message || "Failed to rename chat.");
+        showStatus(error.message || "Failed to rename chat.");
       }
       return;
     }
 
     const action = dialog.action;
     await action();
-  }, [closeSettingsDialog, settingsDialog]);
+  }, [closeSettingsDialog, settingsDialog, showStatus]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -293,7 +330,7 @@ export default function Home() {
         const data = await response.json();
 
         if (!response.ok) {
-          setStatus(data.error || "Failed to load chat history.");
+          showStatus(data.error || "Failed to load chat history.");
           return [];
         }
 
@@ -305,7 +342,9 @@ export default function Home() {
           ? chats[0]?._id || ""
           : currentSelectedChatId && chats.some((chat) => chat._id === currentSelectedChatId)
             ? currentSelectedChatId
-            : chats[0]?._id || "";
+            : isDraftChat
+              ? ""
+              : chats[0]?._id || "";
 
         selectChat(nextSelectedChatId);
 
@@ -314,13 +353,13 @@ export default function Home() {
 
         return chats;
       } catch (error) {
-        setStatus(error.message || "Failed to load chat history.");
+        showStatus(error.message || "Failed to load chat history.");
         return [];
       } finally {
         setHistoryLoading(false);
       }
     },
-      [selectChat]
+      [isDraftChat, selectChat, showStatus]
   );
 
   useEffect(() => {
@@ -510,23 +549,24 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        setStatus(data.error || "Failed to create a chat.");
+        showStatus(data.error || "Failed to create a chat.");
         return null;
       }
 
       const chatId = data.chatId || "";
+      setIsDraftChat(false);
       selectChat(chatId);
       setAnswer("");
-      setStatus("New chat created.");
-      await loadHistory({ selectLatest: true });
+      showStatus("New chat created.");
+      await loadHistory({ selectLatest: false });
       return chatId;
     } catch (error) {
-      setStatus(error.message || "Failed to create a chat.");
+      showStatus(error.message || "Failed to create a chat.");
       return null;
     } finally {
       setCreatingChat(false);
     }
-  }, [loadHistory, selectChat]);
+  }, [loadHistory, selectChat, showStatus]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -538,11 +578,11 @@ export default function Home() {
 
   const handleUpload = async () => {
     if (!file) {
-      setStatus("Select a PDF first.");
+      showStatus("Select a PDF first.");
       return;
     }
 
-    setStatus("");
+    dismissStatus();
     setUploading(true);
 
     try {
@@ -551,6 +591,7 @@ export default function Home() {
 
       const response = await fetch("/api/upload", {
         method: "POST",
+        credentials: "include",
         body: formData,
       });
 
@@ -562,7 +603,7 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        setStatus(data.error || "Upload failed.");
+        showStatus(data.error || "Upload failed.");
         return;
       }
 
@@ -599,15 +640,16 @@ export default function Home() {
       }
 
       if (!chatResponse.ok) {
-        setStatus(chatData.error || "File uploaded, but could not attach it to the chat.");
+        showStatus(chatData.error || "File uploaded, but could not attach it to the chat.");
         return;
       }
 
-      setStatus("File uploaded successfully. You can now ask a question.");
+      showStatus("File uploaded successfully. You can now ask a question.");
+      clearPendingFileSelection();
       setAnswer("");
       await loadHistory({ selectLatest: false });
     } catch (error) {
-      setStatus(error.message || "Upload failed.");
+      showStatus(error.message || "Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -615,7 +657,7 @@ export default function Home() {
 
   const handleAsk = async () => {
     if (!question || !fileId) {
-      setStatus("Upload a PDF before asking a question.");
+      showStatus("Upload a PDF before asking a question.");
       return;
     }
 
@@ -630,7 +672,7 @@ export default function Home() {
     }
 
     setLoading(true);
-    setStatus("");
+    dismissStatus();
 
     try {
       const response = await fetch("/api/ask", {
@@ -654,7 +696,7 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        setStatus(data.error || "Failed to get an answer.");
+        showStatus(data.error || "Failed to get an answer.");
         return;
       }
 
@@ -684,7 +726,7 @@ export default function Home() {
 
       await loadHistory({ selectLatest: false });
     } catch (error) {
-      setStatus(error.message || "Failed to get an answer.");
+      showStatus(error.message || "Failed to get an answer.");
     } finally {
       setLoading(false);
     }
@@ -709,7 +751,7 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        setStatus(data.error || "Failed to delete chat.");
+        showStatus(data.error || "Failed to delete chat.");
         return;
       }
 
@@ -719,10 +761,10 @@ export default function Home() {
       }
 
       setDeletingChatId("");
-      setStatus("Chat deleted successfully.");
+      showStatus("Chat deleted successfully.");
       await loadHistory({ selectLatest: false });
     } catch (error) {
-      setStatus(error.message || "Failed to delete chat.");
+      showStatus(error.message || "Failed to delete chat.");
     }
   };
 
@@ -742,18 +784,17 @@ export default function Home() {
   };
 
   const handleNewChat = async () => {
-    setFile(null);
+    dismissStatus();
+
+    const chatId = await createChat();
+
+    if (!chatId) {
+      return;
+    }
+
     setFileId("");
     setQuestion("");
     setAnswer("");
-    setStatus("");
-    selectChat("");
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-
-    await createChat();
   };
 
   const handleSend = async (event) => {
@@ -761,37 +802,61 @@ export default function Home() {
     await handleAsk();
   };
 
+  const showUploadAction = Boolean(file);
+
   return (
     <main className="h-screen overflow-hidden bg-[#0b0f17] text-slate-100">
       <div className="flex h-full min-h-0 flex-col lg:flex-row">
         <aside className="flex min-h-0 flex-col border-b border-white/10 bg-[#0d121b] lg:h-full lg:w-[320px] lg:border-b-0 lg:border-r">
           <div className="flex min-h-0 flex-1 flex-col p-4">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Study Assistant</p>
-                <h1 className="mt-1 text-lg font-semibold text-white">Chats</h1>
+            <div className="rounded-2xl border border-white/10 bg-linear-to-br from-[#141c2b] to-[#101726] p-3 shadow-lg shadow-black/25">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Study Assistant</p>
+                  <h1 className="mt-1 truncate text-lg font-semibold text-white">Chats</h1>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNewChat}
+                  disabled={creatingChat}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:border-amber-400/40 hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {creatingChat ? "Creating..." : "New"}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleNewChat}
-                disabled={creatingChat}
-                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs font-medium text-white transition hover:border-amber-400/40 hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {creatingChat ? "Creating..." : "New chat"}
-              </button>
-            </div>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-              <label className="flex items-center gap-2 text-sm text-slate-300">
-                <span className="text-slate-500">Search</span>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search chats"
-                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-                />
-              </label>
+              <div className="mt-3 rounded-xl border border-white/10 bg-[#0e1523] px-3 py-2">
+                <label className="flex items-center gap-2 text-sm text-slate-300">
+                  <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Search chats"
+                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
+                <span>{historyLoading ? "Loading chats..." : `${visibleHistory.length} shown`}</span>
+                {searchTerm.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-300 transition hover:bg-white/10"
+                  >
+                    Clear search
+                  </button>
+                ) : (
+                  <span>{history.length} total</span>
+                )}
+              </div>
             </div>
 
             <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-2">
@@ -918,49 +983,15 @@ export default function Home() {
         </aside>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0b0f17]">
-          <header className="border-b border-white/10 bg-[#0b0f17]/95 px-4 py-4 backdrop-blur lg:px-8">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">ChatGPT-style workspace</p>
-                <h2 className="mt-1 text-xl font-semibold text-white sm:text-2xl">{activeChatTitle}</h2>
-                <p className="mt-2 max-w-2xl text-sm text-slate-400">
-                  {selectedChat
-                    ? previewMessage(selectedChat.messages)
-                    : "No chat selected yet. Start a new thread from the sidebar."}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                  {history.length} chats saved
-                </span>
-                {selectedChat?.fileId ? (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-400">
-                    File remembered for this chat
-                  </span>
-                ) : null}
-                {fileId ? (
-                  <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-300">
-                    PDF ready
-                  </span>
-                ) : (
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-400">
-                    Upload required
-                  </span>
-                )}
-              </div>
-            </div>
-          </header>
-
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 lg:px-8">
-              <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8">
+              <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
                 {showWelcomePanel ? (
                   <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-                    <div className="max-w-3xl space-y-6">
+                    <div className="max-w-3xl space-y-8">
                       <div className="space-y-3">
-                        <p className="text-sm uppercase tracking-[0.4em] text-slate-500">Study Assistant</p>
-                        <h3 className="text-3xl font-semibold text-white sm:text-4xl">
+                        <div className="text-6xl">📚</div>
+                        <h3 className="text-3xl font-bold text-white sm:text-4xl">
                           {welcomeCopy.greeting}
                         </h3>
                         <p className="mx-auto max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
@@ -968,115 +999,177 @@ export default function Home() {
                         </p>
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {starterPrompts.map((prompt) => (
-                          <button
-                            key={prompt}
-                            type="button"
-                            onClick={() => setQuestion(prompt)}
-                            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-slate-200 transition hover:border-amber-400/30 hover:bg-amber-400/10 hover:text-white"
-                          >
-                            {prompt}
-                          </button>
-                        ))}
+                      <div className="space-y-3 text-left">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Quick start prompts</p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {starterPrompts.map((prompt) => (
+                            <button
+                              key={prompt}
+                              type="button"
+                              onClick={() => setQuestion(prompt)}
+                              className="group relative rounded-2xl border border-white/10 bg-linear-to-br from-white/5 to-white/2 px-4 py-4 text-left text-sm text-slate-200 transition-all duration-300 hover:border-amber-400/30 hover:from-amber-400/10 hover:to-amber-400/5"
+                            >
+                              <span className="font-medium group-hover:text-white">{prompt}</span>
+                              <div className="absolute right-3 top-3 rounded-full bg-amber-400/0 p-2 text-amber-400 transition-all group-hover:bg-amber-400/10">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                ) : selectedChat.messages?.length > 0 ? (
-                    selectedChat.messages.map((message, index) => (
+                ) : selectedChat?.messages?.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedChat.messages.map((message, index) => (
                       <div
                         key={`${selectedChat._id}-${index}`}
                         className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[90%] rounded-3xl border px-4 py-3 shadow-lg sm:max-w-[80%] ${
-                            message.role === "user"
-                              ? "border-amber-400/20 bg-amber-400/10 text-amber-50"
-                              : "border-white/10 bg-[#111827] text-slate-100"
+                          className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${
+                            message.role === "user" ? "flex-row-reverse" : "flex-row"
                           }`}
                         >
-                          <p className="mb-2 text-[10px] uppercase tracking-[0.32em] text-slate-400">
-                            {message.role === "user" ? "You" : "Assistant"}
-                          </p>
-                          <p className="whitespace-pre-wrap text-sm leading-7 sm:text-[15px]">{message.content}</p>
+                          {message.role === "assistant" && (
+                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white">
+                              AI
+                            </div>
+                          )}
+                          
+                          <div
+                            className={`rounded-3xl px-5 py-3 ${
+                              message.role === "user"
+                                ? "rounded-br-sm border border-amber-400/30 bg-linear-to-br from-amber-400/20 to-amber-400/10 text-amber-50 shadow-lg shadow-amber-500/10"
+                                : "rounded-bl-sm border border-slate-700/50 bg-linear-to-br from-slate-800 to-slate-900 text-slate-100 shadow-lg shadow-black/20"
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap text-sm leading-7 sm:text-[15px] wrap-break-word">
+                              {message.content}
+                            </p>
+                          </div>
+
+                          {message.role === "user" && (
+                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-amber-400/40 to-amber-500/40 text-xs font-bold text-amber-200">
+                              You
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="flex min-h-70 items-center justify-center rounded-4xl border border-dashed border-white/10 bg-white/5 px-6 py-12 text-center text-slate-400">
-                      This chat has no messages yet.
-                    </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex min-h-64 items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/3 px-6 py-12 text-center">
+                    <p className="text-sm text-slate-400">This chat is empty. Ask a question to get started.</p>
+                  </div>
                 )}
 
-                {status ? (
-                  <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-                    {status}
+                {status && (
+                  <div className="rounded-2xl border border-amber-400/30 bg-linear-to-r from-amber-400/20 to-amber-400/10 px-4 py-3 text-sm text-amber-100 flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400/30">
+                      <span className="h-2 w-2 rounded-full bg-amber-400"></span>
+                    </span>
+                    <p className="flex-1">{status}</p>
+                    <button
+                      type="button"
+                      onClick={() => dismissStatus()}
+                      className="rounded-full p-1 text-amber-200/80 transition hover:bg-amber-300/20 hover:text-amber-50"
+                      aria-label="Dismiss notification"
+                      title="Dismiss"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                ) : null}
+                )}
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-white/10 bg-[#0c111a]/95 px-4 py-4 backdrop-blur lg:px-8">
+            <div className="shrink-0 border-t border-white/10 bg-linear-to-t from-[#0c111a] to-[#0b0f17]/50 px-4 py-4 backdrop-blur lg:px-8">
               <form
                 onSubmit={handleSend}
-                className="mx-auto flex w-full max-w-4xl flex-col gap-3 rounded-[1.75rem] border border-white/10 bg-[#101624] p-3 shadow-2xl shadow-black/30"
+                className="mx-auto flex w-full max-w-4xl flex-col gap-3 rounded-3xl border border-white/10 bg-[#101624] p-3 shadow-xl shadow-black/20"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
+                    disabled={loading || creatingChat || uploading}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Attach PDF
+                    {file ? "Change PDF" : "Attach PDF"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleUpload}
-                    disabled={uploading || !file}
-                    className="rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-100 transition hover:border-amber-300/40 hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {uploading ? "Uploading..." : selectedChat?.fileId ? "Replace chat PDF" : fileId ? "Re-upload PDF" : "Upload PDF"}
-                  </button>
-                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
-                    {file?.name || "No file attached"}
+
+                  {showUploadAction ? (
+                    <button
+                      type="button"
+                      onClick={handleUpload}
+                      disabled={uploading}
+                      className="rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1.5 text-xs font-medium text-amber-100 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {uploading ? "Uploading..." : "Upload PDF"}
+                    </button>
+                  ) : null}
+
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs text-slate-400">
+                    {file ? file.name : selectedChat?.fileId ? "Chat PDF attached" : "No draft file"}
                   </span>
-                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
-                    {fileId ? `File ID: ${fileId.slice(0, 10)}...` : "Waiting for upload"}
-                  </span>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(event) => setFile(event.target.files?.[0] || null)}
-                    className="hidden"
-                  />
+
+                  {file ? (
+                    <button
+                      type="button"
+                      onClick={clearPendingFileSelection}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/10"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="flex items-end gap-3">
-                  <textarea
-                    value={question}
-                    onChange={(event) => setQuestion(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault();
-                        if (!loading) {
-                          void handleSend(event);
+                  <div className="flex-1 rounded-3xl border border-white/10 bg-[#101624] px-5 py-2 transition focus-within:border-amber-400/30 focus-within:bg-[#111a27] shadow-lg shadow-black/20">
+                    <textarea
+                      value={question}
+                      onChange={(event) => setQuestion(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+                          if (!loading) {
+                            void handleSend(event);
+                          }
                         }
-                      }
-                    }}
-                    placeholder="Ask anything about the uploaded PDF..."
-                    rows={2}
-                    className="max-h-40 min-h-14 flex-1 resize-none rounded-3xl border border-white/10 bg-[#0b0f17] px-4 py-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-amber-400 sm:text-[15px]"
-                  />
+                      }}
+                      placeholder="Ask anything about your PDF..."
+                      rows={2}
+                      className="min-h-12 max-h-40 w-full resize-none bg-transparent text-sm text-white outline-none placeholder:text-slate-500 sm:text-[15px]"
+                    />
+                  </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading || creatingChat}
-                    className="flex h-14 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loading ? "Thinking..." : creatingChat ? "Creating chat..." : "Send"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={loading || creatingChat}
+                      className="flex items-center justify-center rounded-full bg-white p-3 text-slate-950 transition hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Send message"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => setFile(event.target.files?.[0] || null)}
+                  className="hidden"
+                />
               </form>
             </div>
           </div>

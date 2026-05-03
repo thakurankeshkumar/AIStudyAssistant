@@ -33,6 +33,7 @@ export default function Home() {
   const selectedChatIdRef = useRef("");
   const [file, setFile] = useState(null);
   const [fileId, setFileId] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,6 +49,13 @@ export default function Home() {
   const [renameValue, setRenameValue] = useState("");
   const [deletingChatId, setDeletingChatId] = useState("");
 
+  const starterPrompts = [
+    "Summarize this PDF in simple words",
+    "Explain the key topics from the uploaded document",
+    "Create short exam questions from this file",
+    "Give me a quick revision plan from this PDF",
+  ];
+
   const selectChat = useCallback((chatId) => {
     selectedChatIdRef.current = chatId;
     setSelectedChatId(chatId);
@@ -59,6 +67,33 @@ export default function Home() {
   );
 
   const activeChatTitle = selectedChat?.title || "New chat";
+  const showWelcomePanel = !selectedChat || (selectedChat.messages?.length || 0) === 0;
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+
+        if (response.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        setDisplayName(data.name || data.username || "");
+      } catch {
+        // Keep fallback greeting if profile lookup fails.
+      }
+    };
+
+    void loadProfile();
+  }, []);
 
   const visibleHistory = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -633,8 +668,34 @@ export default function Home() {
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 lg:px-8">
               <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-                {selectedChat ? (
-                  selectedChat.messages?.length > 0 ? (
+                {showWelcomePanel ? (
+                  <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+                    <div className="max-w-3xl space-y-6">
+                      <div className="space-y-3">
+                        <p className="text-sm uppercase tracking-[0.4em] text-slate-500">Study Assistant</p>
+                        <h3 className="text-3xl font-semibold text-white sm:text-4xl">
+                          Hey, {displayName || "there"}. Ready to dive in?
+                        </h3>
+                        <p className="mx-auto max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
+                          Ask anything about your PDF, start a new chat, or pick one of these quick ideas to begin.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {starterPrompts.map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => setQuestion(prompt)}
+                            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-slate-200 transition hover:border-amber-400/30 hover:bg-amber-400/10 hover:text-white"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : selectedChat.messages?.length > 0 ? (
                     selectedChat.messages.map((message, index) => (
                       <div
                         key={`${selectedChat._id}-${index}`}
@@ -658,18 +719,6 @@ export default function Home() {
                     <div className="flex min-h-70 items-center justify-center rounded-4xl border border-dashed border-white/10 bg-white/5 px-6 py-12 text-center text-slate-400">
                       This chat has no messages yet.
                     </div>
-                  )
-                ) : (
-                  <div className="flex min-h-105 items-center justify-center rounded-4xl border border-dashed border-white/10 bg-white/5 px-6 py-12 text-center">
-                    <div className="max-w-lg">
-                      <p className="text-[11px] uppercase tracking-[0.4em] text-slate-500">Ready to start</p>
-                      <h3 className="mt-3 text-3xl font-semibold text-white">Upload a PDF and ask your first question</h3>
-                      <p className="mt-4 text-sm leading-7 text-slate-400 sm:text-base">
-                        Your chat history appears on the left. When you ask a question, the assistant saves a chat record
-                        only for your account.
-                      </p>
-                    </div>
-                  </div>
                 )}
 
                 {status ? (

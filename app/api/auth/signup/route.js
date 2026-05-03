@@ -7,11 +7,11 @@ export async function POST(req) {
   try {
     await connectDB();
 
-    const { username, password } = await req.json();
+    const { name, username, password } = await req.json();
 
-    if (!username || !password) {
+    if (!name || !username || !password) {
       return Response.json(
-        { error: "Username and password required" },
+        { error: "Name, username and password required" },
         { status: 400 }
       );
     }
@@ -30,6 +30,7 @@ export async function POST(req) {
 
     // 🔹 Create user
     const user = await User.create({
+      name,
       username,
       password: hashedPassword,
     });

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 export default function SignupPage() {
+	const [name, setName] = useState("");
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
@@ -13,8 +14,8 @@ export default function SignupPage() {
 		event.preventDefault();
 		setError("");
 
-		if (!username || !password) {
-			setError("Enter both username and password.");
+		if (!name || !username || !password) {
+			setError("Enter your name, username and password.");
 			return;
 		}
 
@@ -27,7 +28,7 @@ export default function SignupPage() {
 					"Content-Type": "application/json",
 				},
 				credentials: "include",
-				body: JSON.stringify({ username, password }),
+				body: JSON.stringify({ name, username, password }),
 			});
 
 			const data = await response.json();
@@ -73,6 +74,18 @@ export default function SignupPage() {
 					</div>
 
 					<form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+						<label className="block space-y-2">
+							<span className="text-sm font-medium text-white/90">Name</span>
+							<input
+								type="text"
+								value={name}
+								onChange={(event) => setName(event.target.value)}
+								className="w-full rounded-2xl border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
+								placeholder="Ankesh Kumar"
+								autoComplete="name"
+							/>
+						</label>
+
 						<label className="block space-y-2">
 							<span className="text-sm font-medium text-white/90">Username</span>
 							<input

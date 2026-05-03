@@ -176,7 +176,7 @@ export default function Home() {
 
           <aside className="relative hidden min-w-0 overflow-hidden px-5 py-8 sm:block sm:px-8 lg:px-10 xl:px-14">
             <div className="landing-sweep" />
-            <div className="product-frame landing-preview fade-in-up relative z-10 h-full min-h-[520px] [animation-delay:180ms] sm:min-h-[620px]">
+            <div className="product-frame landing-preview fade-in-up relative z-10 h-full min-h-130 [animation-delay:180ms] sm:min-h-155">
               <div className="grid h-full grid-rows-[auto_1fr_auto]">
                 <div className="flex items-center justify-between border-b border-white/10 p-4">
                   <div>
@@ -301,7 +301,7 @@ export default function Home() {
 
       <section id="features" className="section-band border-b border-white/10">
         <div className="grid w-full xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="min-h-[520px] border-b border-white/10 px-5 py-14 sm:px-8 lg:px-10 xl:border-b-0 xl:border-r xl:px-14">
+          <div className="min-h-130 border-b border-white/10 px-5 py-14 sm:px-8 lg:px-10 xl:border-b-0 xl:border-r xl:px-14">
             <p className="eyebrow">Product depth</p>
             <h2 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-6xl">
               It behaves like a study product, not a single prompt box.
@@ -349,7 +349,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid min-h-[420px] gap-px bg-white/10 md:grid-cols-3">
+          <div className="grid min-h-105 gap-px bg-white/10 md:grid-cols-3">
             {metrics.slice(0, 3).map(([label, text], index) => (
               <article key={label} className="interactive-card flex flex-col justify-between bg-[#0b111d] p-6 sm:p-8">
                 <span className="text-sm font-semibold text-amber-200">0{index + 1}</span>
@@ -425,7 +425,7 @@ export default function Home() {
       </section>
 
       <section className="hero-pattern border-t border-white/10">
-        <div className="grid min-h-[520px] w-full lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid min-h-130 w-full lg:grid-cols-[1.15fr_0.85fr]">
           <div className="flex flex-col justify-center border-b border-white/10 px-5 py-14 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <p className="eyebrow">Start now</p>
             <h2 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-7xl">

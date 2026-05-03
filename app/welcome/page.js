@@ -4,11 +4,24 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./welcome.module.css";
 
+const welcomeSteps = [
+  ["01", "Start with any question", "Use the chat immediately, even before uploading notes."],
+  ["02", "Attach PDFs when needed", "Switch into grounded document answers as soon as you add material."],
+  ["03", "Keep every session", "Return to saved chats, rename them, or clean them up later."],
+];
+
+const previewPrompts = [
+  "Summarize unit 3 in simple words.",
+  "Make five exam questions from this PDF.",
+  "Build a 20 minute revision plan.",
+];
+
 export default function WelcomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
   const [isAnimated, setIsAnimated] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
 
   const userLabel = useMemo(() => userName || "there", [userName]);
 
@@ -63,6 +76,8 @@ export default function WelcomePage() {
   }, [router]);
 
   const handleGetStarted = async () => {
+    setIsEntering(true);
+
     try {
       const response = await fetch("/api/auth/welcome", {
         method: "POST",
@@ -77,6 +92,8 @@ export default function WelcomePage() {
     } catch (error) {
       console.error("Error:", error);
       router.push("/home");
+    } finally {
+      setIsEntering(false);
     }
   };
 
@@ -101,10 +118,10 @@ export default function WelcomePage() {
           <div className={styles.heroTop}>
             <div className={styles.badge}>
               <span className={styles.badgeDot} />
-              Welcome experience
+              First workspace setup
             </div>
             <div className={styles.statusPill}>
-              {loading ? "Syncing profile" : "Ready"}
+              Ready for study
             </div>
           </div>
 
@@ -112,76 +129,72 @@ export default function WelcomePage() {
             <section className={styles.welcomeBox}>
               <p className={styles.kicker}>StudyAssistant</p>
               <h1 className={styles.title}>
-                Built for faster revision, clearer notes, and better answers.
+                Welcome, <span className={styles.userName}>{userLabel}</span>.
               </h1>
 
               <p className={styles.greeting}>
-                Hey <span className={styles.userName}>{userLabel}</span>, your workspace is ready.
+                Your study desk is ready.
               </p>
 
               <p className={styles.description}>
-                Start with a question, attach a document when you need grounded answers, or just explore with general study help.
+                Ask a question, attach a PDF when you need grounded answers, and keep each revision session organized in one calm workspace.
               </p>
 
               <div className={styles.ctaRow}>
-                <button className={styles.button} onClick={handleGetStarted}>
-                  Enter workspace
+                <button className={styles.button} onClick={handleGetStarted} disabled={isEntering}>
+                  {isEntering ? "Opening workspace..." : "Enter workspace"}
                 </button>
                 <div className={styles.helperText}>
-                  Fast chat setup, dark editorial UI, and no clutter.
+                  Your first chat, upload tools, and account controls are waiting inside.
                 </div>
               </div>
             </section>
 
             <aside className={styles.sidePanel}>
-              <div className={styles.summaryCard}>
-                <p className={styles.summaryLabel}>What&apos;s inside</p>
-                <div className={styles.summaryList}>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>01</span>
-                    <span>General study chat without a PDF</span>
+              <div className={styles.previewPanel}>
+                <div className={styles.previewHeader}>
+                  <span className={styles.logoMark}>SA</span>
+                  <div>
+                    <p>Live workspace</p>
+                    <strong>New revision thread</strong>
                   </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>02</span>
-                    <span>Upload documents when you want grounded answers</span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>03</span>
-                    <span>Quick prompts, chat history, and account controls</span>
-                  </div>
+                </div>
+                <div className={styles.promptStack}>
+                  {previewPrompts.map((prompt, index) => (
+                    <div
+                      key={prompt}
+                      className={styles.promptBubble}
+                      style={{ animationDelay: `${220 + index * 120}ms` }}
+                    >
+                      {prompt}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className={styles.features}>
-                <div className={styles.feature}>
-                  <div className={styles.featureIcon}>1</div>
-                  <div className={styles.featureText}>
-                    <h3>Start instantly</h3>
-                    <p>No required upload before your first question.</p>
-                  </div>
-                </div>
-
-                <div className={styles.feature}>
-                  <div className={styles.featureIcon}>2</div>
-                  <div className={styles.featureText}>
-                    <h3>Grounded when needed</h3>
-                    <p>Add a PDF later and the chat switches to document mode.</p>
-                  </div>
-                </div>
-
-                <div className={styles.feature}>
-                  <div className={styles.featureIcon}>3</div>
-                  <div className={styles.featureText}>
-                    <h3>Keep working</h3>
-                    <p>Your chats stay organized in the sidebar for quick return.</p>
-                  </div>
+              <div className={styles.summaryCard}>
+                <p className={styles.summaryLabel}>What happens next</p>
+                <div className={styles.summaryList}>
+                  {welcomeSteps.map(([number, title, text], index) => (
+                    <div
+                      key={title}
+                      className={styles.summaryItem}
+                      style={{ animationDelay: `${360 + index * 120}ms` }}
+                    >
+                      <span className={styles.summaryIcon}>{number}</span>
+                      <span>
+                        <strong>{title}</strong>
+                        <small>{text}</small>
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </aside>
           </div>
 
           <p className={styles.footer}>
-            Your study session starts in one click. Make it count.
+            One click opens the dashboard. No setup detour, no clutter.
           </p>
         </div>
       </div>

@@ -107,6 +107,21 @@ button {
   overflow: hidden;
 }
 
+.interactive-card {
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    background 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.interactive-card:hover {
+  border-color: rgba(240, 179, 94, 0.25);
+  background: linear-gradient(180deg, rgba(22, 31, 49, 0.94), rgba(12, 18, 31, 0.92));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.34);
+  transform: translateY(-3px);
+}
+
 .btn-primary,
 .btn-secondary {
   display: inline-flex;
@@ -124,11 +139,13 @@ button {
 .btn-primary {
   background: var(--accent);
   color: var(--ink);
+  box-shadow: 0 12px 32px rgba(240, 179, 94, 0.18);
 }
 
 .btn-primary:hover {
   background: var(--accent-strong);
   transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(240, 179, 94, 0.24);
 }
 
 .btn-secondary {
@@ -177,6 +194,45 @@ button {
   animation: landing-sweep 7s ease-in-out infinite;
 }
 
+.landing-preview {
+  transition:
+    transform 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.landing-preview:hover {
+  border-color: rgba(240, 179, 94, 0.22);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.38);
+  transform: translateY(-4px);
+}
+
+.landing-chat-row {
+  animation: preview-row-in 650ms ease both;
+}
+
+.landing-message {
+  animation: preview-message-in 700ms ease both;
+}
+
+.landing-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: progress-shine 2.8s ease-in-out infinite;
+  transform: translateX(-120%);
+}
+
+.pulse-ready {
+  animation: pulse-ready 2.4s ease-in-out infinite;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -213,6 +269,53 @@ button {
   }
 }
 
+@keyframes preview-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes preview-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progress-shine {
+  0%,
+  35% {
+    transform: translateX(-120%);
+  }
+
+  70%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes pulse-ready {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.18);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(52, 211, 153, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -227,6 +330,8 @@ button {
 @media (hover: none) {
   .btn-primary:hover,
   .btn-secondary:hover,
+  .interactive-card:hover,
+  .landing-preview:hover,
   .feature:hover {
     transform: none;
   }

@@ -86,7 +86,7 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#060913] text-foreground">
       <section className="hero-pattern relative min-h-screen border-b border-white/10">
-        <header className="fade-in-up relative z-10 grid w-full grid-cols-1 items-start gap-4 border-b border-white/10 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8 lg:grid-cols-[260px_1fr_auto] lg:px-10">
+        <header className="fade-in-up relative z-10 flex w-full items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-8 lg:grid lg:grid-cols-[260px_1fr_auto] lg:px-10">
           <Link href="/" className="group flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/12 text-sm font-black text-amber-200 shadow-[0_0_30px_rgba(240,179,94,0.14)]">
               SA
@@ -102,14 +102,14 @@ export default function Home() {
               <a
                 key={item}
                 href={`#${item.toLowerCase().replace(" ", "-")}`}
-                className="border-l border-white/10 px-5 transition hover:text-white"
+                className="border-l border-white/10 px-5 transition hover:border-amber-300/30 hover:text-white"
               >
                 {item}
               </a>
             ))}
           </nav>
 
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
+          <div className="hidden items-center gap-3 sm:flex">
             <Link href="/login" className="btn-secondary px-4 py-2 text-sm">
               Log in
             </Link>
@@ -140,13 +140,13 @@ export default function Home() {
             </div>
           </aside>
 
-          <section className="flex min-w-0 flex-col justify-center border-b border-white/10 px-5 py-10 sm:px-8 sm:py-12 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
+          <section className="flex min-w-0 flex-col justify-center border-b border-white/10 px-5 py-9 sm:px-8 sm:py-12 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <div className="fade-in-up [animation-delay:80ms]">
               <p className="eyebrow">AI study workspace for PDFs, notes, and revision</p>
-              <h1 className="mt-6 text-4xl font-semibold leading-[1.02] text-white sm:text-6xl xl:text-8xl">
+              <h1 className="mt-5 text-4xl font-semibold leading-[1.04] text-white sm:mt-6 sm:text-6xl xl:text-8xl">
                 Study from the material you already have.
               </h1>
-              <p className="mt-6 max-w-3xl text-base leading-8 text-muted sm:text-lg">
+              <p className="mt-5 max-w-3xl text-sm leading-7 text-muted sm:mt-6 sm:text-lg sm:leading-8">
                 Upload lecture PDFs, ask focused questions, generate exam practice, and keep
                 every session organized inside a clean product workspace.
               </p>
@@ -160,7 +160,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-12 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:mt-12 sm:grid-cols-2 xl:grid-cols-4">
               {metrics.map(([label, text], index) => (
                 <article
                   key={label}
@@ -174,16 +174,16 @@ export default function Home() {
             </div>
           </section>
 
-          <aside className="relative min-w-0 overflow-hidden px-5 py-8 sm:px-8 lg:px-10 xl:px-14">
+          <aside className="relative hidden min-w-0 overflow-hidden px-5 py-8 sm:block sm:px-8 lg:px-10 xl:px-14">
             <div className="landing-sweep" />
-            <div className="product-frame fade-in-up relative z-10 h-full min-h-[520px] [animation-delay:180ms] sm:min-h-[620px]">
+            <div className="product-frame landing-preview fade-in-up relative z-10 h-full min-h-[520px] [animation-delay:180ms] sm:min-h-[620px]">
               <div className="grid h-full grid-rows-[auto_1fr_auto]">
                 <div className="flex items-center justify-between border-b border-white/10 p-4">
                   <div>
                     <p className="text-xs uppercase tracking-[0.28em] text-muted">Live product preview</p>
                     <h2 className="mt-2 text-xl font-semibold text-white">Revision dashboard</h2>
                   </div>
-                  <span className="rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                  <span className="pulse-ready rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200">
                     Ready
                   </span>
                 </div>
@@ -196,11 +196,12 @@ export default function Home() {
                         {["Thermodynamics notes", "DBMS unit review", "Project viva prep", "Exam sprint"].map((item, index) => (
                           <div
                             key={item}
-                            className={`rounded-lg border px-3 py-2 text-sm ${
+                            className={`landing-chat-row rounded-lg border px-3 py-2 text-sm transition hover:border-amber-300/20 hover:bg-amber-300/8 ${
                               index === 0
                                 ? "border-amber-300/25 bg-amber-300/10 text-amber-50"
                                 : "border-white/8 bg-white/4 text-slate-300"
                             }`}
+                            style={{ animationDelay: `${260 + index * 80}ms` }}
                           >
                             {item}
                           </div>
@@ -231,13 +232,14 @@ export default function Home() {
 
                     <div className="space-y-3">
                       {sampleMessages.map(([role, message], index) => (
-                        <div
+                          <div
                           key={`${role}-${message}`}
-                          className={`max-w-[88%] rounded-lg border px-4 py-3 text-sm leading-6 ${
+                          className={`landing-message max-w-[88%] rounded-lg border px-4 py-3 text-sm leading-6 ${
                             role === "You"
                               ? "ml-auto border-amber-300/25 bg-amber-300/12 text-amber-50"
                               : "border-white/10 bg-[#151c2b] text-slate-100"
                           }`}
+                          style={{ animationDelay: `${420 + index * 120}ms` }}
                         >
                           <span className="mb-1 block text-xs font-semibold text-white/70">{role}</span>
                           {message}
@@ -250,7 +252,7 @@ export default function Home() {
                         <div key={item} className="rounded-lg border border-white/10 bg-white/5 p-4">
                           <p className="text-xs uppercase tracking-[0.22em] text-muted">{item}</p>
                           <div className="mt-3 h-2 rounded-full bg-white/10">
-                            <div className="h-2 w-3/4 rounded-full bg-amber-300" />
+                            <div className="landing-progress h-2 w-3/4 rounded-full bg-amber-300" />
                           </div>
                         </div>
                       ))}
@@ -285,7 +287,7 @@ export default function Home() {
 
           <div className="grid gap-px bg-white/10 sm:grid-cols-2">
             {workflow.map((item) => (
-              <article key={item.step} className="bg-[#0b111d] p-6 sm:p-8">
+              <article key={item.step} className="interactive-card bg-[#0b111d] p-6 sm:p-8">
                 <span className="inline-grid h-11 w-11 place-items-center rounded-lg bg-amber-300 text-sm font-black text-slate-950">
                   {item.step}
                 </span>
@@ -306,7 +308,7 @@ export default function Home() {
             </h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               {useCases.map((item) => (
-                <article key={item.title} className="surface-card p-5">
+                <article key={item.title} className="surface-card interactive-card p-5">
                   <h3 className="text-lg font-semibold text-white">{item.title}</h3>
                   <p className="mt-3 text-sm leading-7 text-muted">{item.copy}</p>
                 </article>
@@ -316,7 +318,7 @@ export default function Home() {
 
           <div className="grid gap-px bg-white/10 sm:grid-cols-2">
             {productHighlights.map(([title, description]) => (
-              <article key={title} className="bg-[#0b111d] p-6">
+              <article key={title} className="interactive-card bg-[#0b111d] p-6">
                 <div className="mb-5 h-1 w-12 rounded-full bg-amber-300" />
                 <h3 className="text-xl font-semibold text-white">{title}</h3>
                 <p className="mt-3 text-sm leading-7 text-muted">{description}</p>
@@ -349,7 +351,7 @@ export default function Home() {
 
           <div className="grid min-h-[420px] gap-px bg-white/10 md:grid-cols-3">
             {metrics.slice(0, 3).map(([label, text], index) => (
-              <article key={label} className="flex flex-col justify-between bg-[#0b111d] p-6 sm:p-8">
+              <article key={label} className="interactive-card flex flex-col justify-between bg-[#0b111d] p-6 sm:p-8">
                 <span className="text-sm font-semibold text-amber-200">0{index + 1}</span>
                 <div>
                   <h3 className="text-2xl font-semibold text-white">{label}</h3>
@@ -377,7 +379,7 @@ export default function Home() {
 
           <div className="grid gap-px bg-white/10 sm:grid-cols-2">
             {outcomes.map(([title, description], index) => (
-              <article key={title} className="bg-[#0b111d] p-6 sm:p-8">
+              <article key={title} className="interactive-card bg-[#0b111d] p-6 sm:p-8">
                 <span className="text-sm font-semibold text-amber-200">Outcome 0{index + 1}</span>
                 <h3 className="mt-10 text-2xl font-semibold text-white">{title}</h3>
                 <p className="mt-3 text-sm leading-7 text-muted">{description}</p>
@@ -392,7 +394,7 @@ export default function Home() {
           {studyStack.map(([title, description], index) => (
             <article
               key={title}
-              className="min-h-72 border-b border-white/10 px-5 py-12 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 last:lg:border-r-0"
+              className="interactive-card min-h-72 border-b border-white/10 px-5 py-12 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 last:lg:border-r-0"
             >
               <p className="text-sm font-semibold text-amber-200">0{index + 1}</p>
               <h2 className="mt-8 text-2xl font-semibold text-white sm:text-3xl">{title}</h2>
@@ -413,7 +415,7 @@ export default function Home() {
 
           <div className="grid gap-px bg-white/10 sm:grid-cols-2">
             {faqs.map(([question, answer]) => (
-              <article key={question} className="bg-[#0b111d] p-6 sm:p-8">
+              <article key={question} className="interactive-card bg-[#0b111d] p-6 sm:p-8">
                 <h3 className="text-xl font-semibold text-white">{question}</h3>
                 <p className="mt-4 text-sm leading-7 text-muted">{answer}</p>
               </article>

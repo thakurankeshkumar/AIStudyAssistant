@@ -840,7 +840,7 @@ export default function Home() {
   const showUploadAction = Boolean(file);
 
   return (
-    <main className="h-[100dvh] overflow-hidden bg-[#080c14] text-slate-100">
+    <main className="h-dvh overflow-hidden bg-[#080c14] text-slate-100">
       <div className="relative flex h-full min-h-0 flex-col lg:flex-row">
         {sidebarOpen ? (
           <button
@@ -868,14 +868,14 @@ export default function Home() {
         <aside
           className={`fixed inset-y-0 left-0 z-40 min-h-0 border-r border-white/10 bg-[#0b111d] shadow-2xl shadow-black/40 transition-[width,opacity,transform] duration-200 lg:static lg:h-full lg:shadow-none ${
             sidebarOpen
-              ? "flex w-[min(86vw,320px)] flex-col opacity-100 lg:w-[260px]"
+              ? "flex w-[min(86vw,320px)] flex-col opacity-100 lg:w-65"
               : "pointer-events-none flex w-[min(86vw,320px)] -translate-x-full flex-col opacity-0 lg:pointer-events-auto lg:w-0 lg:-translate-x-3 lg:overflow-hidden"
           }`}
         >
           <div className="flex min-h-0 flex-1 flex-col px-2 py-3">
             <div className="flex items-center justify-between px-2 pb-3">
               <div className="flex items-center gap-2 rounded-xl px-1 py-1">
-                <span className="grid h-9 w-9 place-items-center rounded-xl border border-amber-200/15 bg-linear-to-br from-amber-300/18 to-white/[0.04] text-sm font-black text-amber-100 shadow-[0_10px_30px_rgba(240,179,94,0.08)]">
+                <span className="grid h-9 w-9 place-items-center rounded-xl border border-amber-200/15 bg-linear-to-br from-amber-300/18 to-white/4 text-sm font-black text-amber-100 shadow-[0_10px_30px_rgba(240,179,94,0.08)]">
                   SA
                 </span>
                 <span className="min-w-0">
@@ -886,7 +886,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(false)}
-                className="grid h-9 w-9 place-items-center rounded-xl text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
+                className="grid h-9 w-9 place-items-center rounded-xl text-slate-300 transition hover:bg-white/8 hover:text-white"
                 aria-label="Hide sidebar"
                 title="Hide sidebar"
               >
@@ -896,7 +896,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="space-y-1 rounded-2xl border border-white/[0.06] bg-[#101624] p-1">
+            <div className="space-y-1 rounded-2xl border border-white/6 bg-[#101624] p-1">
               <button
                 type="button"
                 onClick={handleNewChat}
@@ -936,7 +936,7 @@ export default function Home() {
               </label>
             </div>
 
-            <div className="mx-1 mt-3 rounded-2xl border border-amber-200/10 bg-amber-200/[0.045] px-3 py-2.5">
+            <div className="mx-1 mt-3 rounded-2xl border border-amber-200/10 bg-amber-200/4.5 px-3 py-2.5">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-medium text-amber-100">Study mode</span>
                 <span className="rounded-full bg-amber-200/10 px-2 py-0.5 text-[11px] text-amber-100">
@@ -973,7 +973,7 @@ export default function Home() {
                         className={`group relative flex items-center gap-1 rounded-xl transition ${
                           isSelected
                             ? "bg-amber-300/10 text-white shadow-[inset_3px_0_0_rgba(240,179,94,0.65)]"
-                            : "text-slate-300 hover:bg-white/[0.06] hover:text-slate-50"
+                            : "text-slate-300 hover:bg-white/6 hover:text-slate-50"
                         }`}
                       >
                         <button
@@ -1056,13 +1056,13 @@ export default function Home() {
               )}
             </div>
 
-            <div className="mt-3 border-t border-white/[0.08] px-1 pt-2">
+            <div className="mt-3 border-t border-white/8 px-1 pt-2">
               <button
                 type="button"
                 onClick={() => void openSettings()}
                 className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/[0.07]"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-linear-to-br from-amber-300/20 to-white/[0.05] text-xs font-semibold text-amber-100">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-linear-to-br from-amber-300/20 to-white/5 text-xs font-semibold text-amber-100">
                   {(displayName || "U").slice(0, 1).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -1072,7 +1072,16 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={handleLogout}
+                onClick={() =>
+                  openSettingsDialog({
+                    title: "Log out?",
+                    description:
+                      "This will end your current session and return you to the landing page. Your chats and uploaded files will stay saved.",
+                    confirmLabel: "Log out",
+                    variant: "warning",
+                    action: handleLogout,
+                  })
+                }
                 disabled={loggingOut}
                 className="mt-1 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm text-slate-400 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -1101,7 +1110,7 @@ export default function Home() {
               </div>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_50%_0%,rgba(240,179,94,0.055),transparent_34%),linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[length:auto,44px_44px] px-4 py-6 sm:px-6">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_50%_0%,rgba(240,179,94,0.055),transparent_34%),linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px)] bg-size-[auto,44px_44px] px-4 py-6 sm:px-6">
               <div className="mx-auto flex w-full max-w-3xl flex-col">
                 {showWelcomePanel ? (
                   <div className="flex min-h-[calc(100dvh-235px)] flex-col items-center justify-center text-center">
@@ -1122,7 +1131,7 @@ export default function Home() {
                             onClick={() => setQuestion(prompt)}
                             className="group flex min-h-14 items-center gap-3 rounded-2xl border border-white/10 bg-[#101624]/90 px-4 py-3 text-left text-sm leading-6 text-slate-200 transition hover:border-amber-200/20 hover:bg-[#151c2b]"
                           >
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xs text-amber-100 group-hover:bg-amber-300/12">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/6 text-xs text-amber-100 group-hover:bg-amber-300/12">
                               0{index + 1}
                             </span>
                             <span>

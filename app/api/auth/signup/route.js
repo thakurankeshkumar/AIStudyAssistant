@@ -38,6 +38,7 @@ export async function POST(req) {
         chatsDeleted: 0,
         filesUploaded: 0,
       },
+      firstTime: true,
     });
 
     // 🔹 Create JWT

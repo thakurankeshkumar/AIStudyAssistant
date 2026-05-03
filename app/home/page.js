@@ -247,6 +247,12 @@ export default function Home() {
 
         const data = await response.json();
         setDisplayName(data.name || data.username || "");
+
+        // Redirect to welcome page if first time user
+        if (data.firstTime) {
+          window.location.assign("/welcome");
+          return;
+        }
       } catch {
         // Keep fallback greeting if profile lookup fails.
       }

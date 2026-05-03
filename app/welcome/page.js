@@ -134,21 +134,19 @@ export default function WelcomePage() {
             </section>
 
             <aside className={styles.sidePanel}>
-              <div className={styles.orb}></div>
-
               <div className={styles.summaryCard}>
                 <p className={styles.summaryLabel}>What&apos;s inside</p>
                 <div className={styles.summaryList}>
                   <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>💬</span>
+                    <span className={styles.summaryIcon}>01</span>
                     <span>General study chat without a PDF</span>
                   </div>
                   <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>📄</span>
+                    <span className={styles.summaryIcon}>02</span>
                     <span>Upload documents when you want grounded answers</span>
                   </div>
                   <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>⚡</span>
+                    <span className={styles.summaryIcon}>03</span>
                     <span>Quick prompts, chat history, and account controls</span>
                   </div>
                 </div>

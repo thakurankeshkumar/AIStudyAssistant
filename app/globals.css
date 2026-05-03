@@ -3,10 +3,13 @@
 :root {
   --background: #070b14;
   --foreground: #f3ede4;
-  --muted: #9ca7ba;
-  --surface: rgba(13, 18, 31, 0.78);
-  --surface-strong: rgba(18, 25, 40, 0.94);
-  --border: rgba(255, 255, 255, 0.08);
+  --muted: #a6b0c3;
+  --surface: rgba(15, 22, 35, 0.78);
+  --surface-strong: rgba(17, 24, 38, 0.94);
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #f0b35e;
+  --accent-strong: #ffbf71;
+  --ink: #060914;
   color-scheme: dark;
 }
 
@@ -30,9 +33,9 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(67, 97, 238, 0.18), transparent 32%),
-    radial-gradient(circle at top right, rgba(255, 183, 77, 0.13), transparent 28%),
-    linear-gradient(180deg, #0b1020 0%, #070b14 48%, #05070d 100%);
+    radial-gradient(circle at 10% 0%, rgba(240, 179, 94, 0.13), transparent 30%),
+    radial-gradient(circle at 90% 8%, rgba(79, 119, 255, 0.14), transparent 30%),
+    linear-gradient(180deg, #0b1020 0%, #080d18 48%, #05070d 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
 }
@@ -56,6 +59,152 @@ select {
 ::selection {
   background: rgba(255, 183, 77, 0.35);
   color: #fff9f1;
+}
+
+.hero-pattern {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 28% 12%, rgba(240, 179, 94, 0.16), transparent 32%),
+    radial-gradient(circle at 86% 20%, rgba(84, 116, 255, 0.15), transparent 28%),
+    linear-gradient(180deg, #0b1020 0%, #080d18 62%, #060913 100%);
+  background-size: 72px 72px, 72px 72px, auto, auto, auto;
+}
+
+.section-band {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0)),
+    #060913;
+}
+
+.surface-card,
+.product-frame {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(18, 26, 41, 0.92), rgba(11, 16, 27, 0.9));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+}
+
+.product-frame {
+  overflow: hidden;
+}
+
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 700;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(240, 179, 94, 0.22);
+  border-radius: 8px;
+  background: rgba(240, 179, 94, 0.08);
+  padding: 0.45rem 0.65rem;
+  color: #ffd79b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.fade-in-up {
+  animation: fade-in-up 700ms ease both;
+}
+
+.float-soft {
+  animation: float-soft 7s ease-in-out infinite;
+}
+
+.vertical-rail {
+  writing-mode: vertical-rl;
+}
+
+.landing-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 0%, rgba(240, 179, 94, 0.09) 42%, transparent 62%);
+  animation: landing-sweep 7s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes landing-sweep {
+  0%,
+  100% {
+    transform: translateX(-18%);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: translateX(18%);
+    opacity: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Custom scrollbar styling for ChatGPT-like appearance */

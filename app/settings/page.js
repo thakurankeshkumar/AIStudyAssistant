@@ -141,7 +141,7 @@ export default function SettingsPage() {
 
   return (
     <main className="min-h-screen bg-[#0b0f17] px-4 py-4 text-slate-100 lg:px-6 lg:py-6">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl overflow-hidden rounded-4xl border border-white/10 bg-[#0d121b]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl overflow-hidden rounded-lg border border-white/10 bg-[#0d121b]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
         <aside className="flex w-65 shrink-0 flex-col border-r border-white/10 bg-[#0c1118] p-4">
           <Link href="/home" className="mb-5 text-sm text-slate-400 transition hover:text-white">
             ← Back to chat
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                 key={section}
                 type="button"
                 onClick={() => setActiveSection(section)}
-                className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm transition ${
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-sm transition ${
                   activeSection === section
                     ? "bg-white/10 text-white"
                     : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -169,7 +169,7 @@ export default function SettingsPage() {
             ))}
           </nav>
 
-          <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+          <div className="mt-6 rounded-lg border border-white/10 bg-white/5 p-4">
             <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Profile</p>
             <p className="mt-2 text-base font-medium text-white">{profile.name || "User"}</p>
             <p className="text-sm text-slate-400">@{profile.username || "unknown"}</p>
@@ -188,11 +188,11 @@ export default function SettingsPage() {
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
               {loading ? (
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-slate-400">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-slate-400">
                   Loading account settings...
                 </div>
               ) : error ? (
-                <div className="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100">
+                <div className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100">
                   {error}
                 </div>
               ) : (
@@ -204,14 +204,14 @@ export default function SettingsPage() {
                       { label: "Files uploaded", value: stats.filesUploaded || 0 },
                       { label: "Active chats", value: stats.activeChats || 0 },
                     ].map((item) => (
-                      <div key={item.label} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                      <div key={item.label} className="rounded-lg border border-white/10 bg-white/5 p-5">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{item.label}</p>
                         <p className="mt-3 text-4xl font-semibold text-white">{item.value}</p>
                       </div>
                     ))}
                   </section>
 
-                  <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                  <section className="rounded-lg border border-white/10 bg-white/5 p-5">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Overview</p>
@@ -223,18 +223,18 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="mt-5 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
+                      <div className="rounded-lg border border-white/10 bg-[#0b0f17] p-4">
                         <p className="text-sm text-slate-400">Name</p>
                         <p className="mt-1 text-base text-white">{profile.name || "User"}</p>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
+                      <div className="rounded-lg border border-white/10 bg-[#0b0f17] p-4">
                         <p className="text-sm text-slate-400">Username</p>
                         <p className="mt-1 text-base text-white">{profile.username || "unknown"}</p>
                       </div>
                     </div>
                   </section>
 
-                  <section className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                  <section className="rounded-lg border border-white/10 bg-white/5 p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Chats</p>
@@ -247,14 +247,14 @@ export default function SettingsPage() {
 
                     <div className="mt-4 space-y-2">
                       {chats.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-white/10 bg-[#0b0f17] p-5 text-sm text-slate-400">
+                        <div className="rounded-lg border border-dashed border-white/10 bg-[#0b0f17] p-5 text-sm text-slate-400">
                           No chats saved yet.
                         </div>
                       ) : (
                         chats.map((chat) => (
                           <div
                             key={chat._id}
-                            className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0b0f17] px-4 py-3"
+                            className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#0b0f17] px-4 py-3"
                           >
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium text-white">{chat.title || "New chat"}</p>
@@ -274,7 +274,7 @@ export default function SettingsPage() {
                     </div>
                   </section>
 
-                  <section className="rounded-3xl border border-rose-400/20 bg-rose-400/10 p-5">
+                  <section className="rounded-lg border border-rose-400/20 bg-rose-400/10 p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-xs uppercase tracking-[0.32em] text-rose-200/70">Danger zone</p>

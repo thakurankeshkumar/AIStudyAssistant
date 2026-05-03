@@ -3,6 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 
+const onboardingSteps = [
+	["Profile", "Create your protected account."],
+	["Workspace", "Move straight into the chat dashboard."],
+	["First session", "Ask generally or attach a PDF."],
+];
+
+const benefits = [
+	["PDF-ready", "Use document context when answers need to stay grounded."],
+	["History saved", "Keep every useful chat available for later revision."],
+	["Account control", "Manage stats, profile details, and deletion flows."],
+];
+
 export default function SignupPage() {
 	const [name, setName] = useState("");
 	const [username, setUsername] = useState("");
@@ -47,30 +59,66 @@ export default function SignupPage() {
 	};
 
 	return (
-		<main
-			className="relative min-h-screen overflow-hidden px-6 py-10 text-foreground lg:px-10"
-			style={{ color: "var(--foreground)" }}
-		>
-			<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(240,179,94,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(72,111,255,0.16),transparent_28%)]" />
-			<div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-				<section className="space-y-6">
-					<Link href="/" className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-white">
-						<span className="text-lg">←</span>
-						Back to landing
-					</Link>
-					<p className="text-xs uppercase tracking-[0.4em] text-muted">Create account</p>
-					<h1 className="max-w-xl text-5xl font-semibold leading-tight text-white md:text-6xl">
-						Start a clean, focused study session.
-					</h1>
-					<p className="max-w-xl text-base leading-8 text-muted md:text-lg">
-						Signup uses the existing REST route, hashes the password, and sets the session cookie so you can move straight to the dashboard.
-					</p>
-				</section>
+		<main className="hero-pattern min-h-screen text-foreground">
+			<header className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-8 lg:px-10">
+				<Link href="/" className="flex items-center gap-3">
+					<span className="grid h-10 w-10 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/12 text-sm font-black text-amber-200">
+						SA
+					</span>
+					<span>
+						<span className="block text-sm font-semibold text-white">Study Assistant</span>
+						<span className="block text-xs text-muted">Create workspace</span>
+					</span>
+				</Link>
 
-				<section className="rounded-4xl border border-white/10 bg-surface-strong p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur md:p-8">
+				<Link href="/login" className="btn-secondary px-4 py-2 text-sm">
+					Log in
+				</Link>
+			</header>
+
+			<section className="mx-auto grid min-h-[calc(100vh-73px)] w-full max-w-7xl items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
+				<div>
+					<div className="fade-in-up">
+						<p className="eyebrow">Create account</p>
+						<h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+							Build a clean study workspace in one step.
+						</h1>
+						<p className="mt-5 max-w-2xl text-base leading-8 text-muted">
+							Sign up once, then start a general study chat or attach lecture PDFs
+							for grounded answers.
+						</p>
+					</div>
+
+					<div className="mt-8 grid gap-3 sm:grid-cols-3">
+						{onboardingSteps.map(([title, text], index) => (
+							<article key={title} className="surface-card p-4">
+								<span className="text-xs font-semibold text-amber-200">0{index + 1}</span>
+								<h2 className="mt-4 text-sm font-semibold text-white">{title}</h2>
+								<p className="mt-2 text-sm leading-6 text-muted">{text}</p>
+							</article>
+						))}
+					</div>
+
+					<div className="mt-6 rounded-lg border border-white/10 bg-[#0b111d]/90 p-4">
+						<p className="text-xs uppercase tracking-[0.28em] text-muted">What you get</p>
+						<div className="mt-4 grid gap-3 md:grid-cols-3">
+							{benefits.map(([title, text]) => (
+								<div key={title} className="rounded-lg border border-white/10 bg-black/20 p-3">
+									<h3 className="text-sm font-semibold text-white">{title}</h3>
+									<p className="mt-2 text-xs leading-5 text-muted">{text}</p>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+
+				<div className="product-frame fade-in-up p-5 sm:p-6 [animation-delay:120ms]">
 					<div className="border-b border-white/10 pb-5">
-						<p className="text-xs uppercase tracking-[0.35em] text-muted">Signup</p>
-						<h2 className="mt-2 text-3xl font-semibold text-white">Create your account</h2>
+						<p className="text-xs uppercase tracking-[0.32em] text-muted">New workspace</p>
+						<h2 className="mt-2 text-3xl font-semibold text-white">Sign up</h2>
+						<p className="mt-3 text-sm leading-6 text-muted">
+							Your account is created and signed in through the existing signup route.
+						</p>
 					</div>
 
 					<form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -80,7 +128,7 @@ export default function SignupPage() {
 								type="text"
 								value={name}
 								onChange={(event) => setName(event.target.value)}
-								className="w-full rounded-2xl border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
+								className="w-full rounded-lg border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
 								placeholder="Ankesh Kumar"
 								autoComplete="name"
 							/>
@@ -92,7 +140,7 @@ export default function SignupPage() {
 								type="text"
 								value={username}
 								onChange={(event) => setUsername(event.target.value)}
-								className="w-full rounded-2xl border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
+								className="w-full rounded-lg border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
 								placeholder="ankesh"
 								autoComplete="username"
 							/>
@@ -104,14 +152,14 @@ export default function SignupPage() {
 								type="password"
 								value={password}
 								onChange={(event) => setPassword(event.target.value)}
-								className="w-full rounded-2xl border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
+								className="w-full rounded-lg border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-[#f0b35e]"
 								placeholder="Choose a strong password"
 								autoComplete="new-password"
 							/>
 						</label>
 
 						{error ? (
-							<p className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+							<p className="rounded-lg border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
 								{error}
 							</p>
 						) : null}
@@ -119,7 +167,7 @@ export default function SignupPage() {
 						<button
 							type="submit"
 							disabled={loading}
-							className="w-full rounded-2xl bg-[#f0b35e] px-5 py-3.5 font-semibold text-slate-950 transition hover:bg-[#ffbf71] disabled:cursor-not-allowed disabled:opacity-60"
+							className="btn-primary w-full px-5 py-3.5 disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{loading ? "Creating account..." : "Sign up"}
 						</button>
@@ -128,12 +176,11 @@ export default function SignupPage() {
 					<p className="mt-5 text-sm text-muted">
 						Already have an account?{" "}
 						<Link href="/login" className="font-medium text-[#f0b35e] transition hover:text-[#ffbf71]">
-							Log in here
+							Log in
 						</Link>
-						.
 					</p>
-				</section>
-			</div>
+				</div>
+			</section>
 		</main>
 	);
 }

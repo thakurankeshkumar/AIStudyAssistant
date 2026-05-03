@@ -115,6 +115,8 @@ export default function Home() {
   const [settingsUpdateMessage, setSettingsUpdateMessage] = useState("");
   const [settingsUpdateError, setSettingsUpdateError] = useState("");
   const [settingsDialog, setSettingsDialog] = useState(null);
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
+  const [welcomeSaving, setWelcomeSaving] = useState(false);
 
   const starterPrompts = [
     "Summarize this PDF in simple words",
@@ -285,10 +287,10 @@ export default function Home() {
         const data = await response.json();
         setDisplayName(data.name || data.username || "");
 
-        // Redirect to welcome page if first time user
         if (data.firstTime) {
-          window.location.assign("/welcome");
-          return;
+          setShowWelcomeOverlay(true);
+        } else {
+          setShowWelcomeOverlay(false);
         }
       } catch {
         // Keep fallback greeting if profile lookup fails.
@@ -780,6 +782,22 @@ export default function Home() {
       // If logout fails, still move away from the app shell.
     } finally {
       window.location.assign("/");
+    }
+  };
+
+  const handleWelcomeStart = async () => {
+    setWelcomeSaving(true);
+
+    try {
+      await fetch("/api/auth/welcome", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error acknowledging welcome:", error);
+    } finally {
+      setWelcomeSaving(false);
+      setShowWelcomeOverlay(false);
     }
   };
 
@@ -1537,6 +1555,85 @@ export default function Home() {
               >
                 {settingsDialog.confirmLabel || "Confirm"}
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showWelcomeOverlay ? (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md">
+          <div className="relative w-full max-w-6xl overflow-hidden rounded-4xl border border-white/10 bg-[#0d121b]/96 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.14),transparent_28%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_45%)]" />
+            <div className="relative grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-100">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Welcome experience
+                </div>
+
+                <h2 className="mt-5 max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                  Built for faster revision, clearer notes, and better answers.
+                </h2>
+
+                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
+                  Hey <span className="text-amber-300">{displayName || "there"}</span>, your workspace is ready. Start with a question, attach a document when you need grounded answers, or just explore with general study help.
+                </p>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleWelcomeStart()}
+                    disabled={welcomeSaving}
+                    className="rounded-full border border-amber-400/30 bg-amber-400/15 px-5 py-3 text-sm font-medium text-amber-50 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {welcomeSaving ? "Entering..." : "Enter workspace"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowWelcomeOverlay(false)}
+                    className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    Maybe later
+                  </button>
+                </div>
+
+                <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                  {[
+                    { label: "Chat mode", value: "General knowledge" },
+                    { label: "Uploads", value: "Optional" },
+                    { label: "Theme", value: "Dark editorial" },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-[0.32em] text-slate-500">{item.label}</p>
+                      <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-8">
+                <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.32em] text-slate-500">What you can do</p>
+                  <div className="mt-4 space-y-3 text-sm text-slate-300">
+                    <div className="flex items-start gap-3 rounded-2xl border border-white/5 bg-[#0b0f17] px-3 py-3">
+                      <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-400" />
+                      <p>Ask general questions without a PDF.</p>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-2xl border border-white/5 bg-[#0b0f17] px-3 py-3">
+                      <span className="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400" />
+                      <p>Attach a document later and switch to grounded answers.</p>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-2xl border border-white/5 bg-[#0b0f17] px-3 py-3">
+                      <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                      <p>Keep chats organized in the sidebar and return anytime.</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+                    The chats page stays mounted behind this panel, so nothing navigates away.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

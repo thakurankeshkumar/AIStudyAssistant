@@ -38,10 +38,17 @@ body {
     linear-gradient(180deg, #0b1020 0%, #080d18 48%, #05070d 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 a {
@@ -54,6 +61,16 @@ button,
 textarea,
 select {
   font: inherit;
+}
+
+button,
+a,
+label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
 }
 
 ::selection {
@@ -204,6 +221,34 @@ select {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: none) {
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .feature:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background:
+      radial-gradient(circle at 14% 0%, rgba(240, 179, 94, 0.12), transparent 36%),
+      linear-gradient(180deg, #0b1020 0%, #080d18 58%, #05070d 100%);
+  }
+
+  .hero-pattern {
+    background-size: 48px 48px, 48px 48px, auto, auto, auto;
+  }
+
+  .eyebrow {
+    max-width: 100%;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    line-height: 1.5;
   }
 }
 

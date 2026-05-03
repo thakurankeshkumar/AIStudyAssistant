@@ -1,15 +1,17 @@
 .container {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(99, 102, 241, 0.16), transparent 30%),
-    linear-gradient(135deg, #090d16 0%, #0c111b 48%, #05070d 100%);
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(135deg, #090d16 0%, #0b111c 48%, #05070d 100%);
+  background-size: 72px 72px, 72px 72px, auto;
   position: relative;
-  overflow: hidden;
-  padding: 24px;
+  overflow: hidden auto;
+  padding: 32px 24px;
 }
 
 .gridGlow {
@@ -27,7 +29,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1180px;
   opacity: 0;
   transform: translateY(18px) scale(0.99);
   transition: opacity 0.45s ease-out, transform 0.55s ease-out;
@@ -69,10 +71,10 @@
 .heroCard {
   position: relative;
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(15, 21, 34, 0.92) 0%, rgba(10, 14, 23, 0.96) 100%);
+  background: linear-gradient(180deg, rgba(15, 22, 35, 0.94) 0%, rgba(9, 14, 23, 0.97) 100%);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 24px;
+  padding: 28px;
   box-shadow: 0 24px 90px rgba(0, 0, 0, 0.36);
   overflow: hidden;
 }
@@ -133,19 +135,23 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  gap: 20px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.welcomeBox {
+  padding: 22px 10px 22px 0;
 }
 
 .title {
-  font-size: clamp(2rem, 5vw, 4.2rem);
-  line-height: 1;
+  font-size: clamp(2.45rem, 7vw, 4rem);
+  line-height: 1.02;
   font-weight: 750;
   margin: 0 0 16px 0;
   color: #ffffff;
-  letter-spacing: -0.05em;
-  max-width: 12ch;
+  letter-spacing: 0;
+  max-width: 13ch;
 }
 
 .highlight {
@@ -201,7 +207,7 @@
 .sidePanel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   position: relative;
 }
 
@@ -209,7 +215,7 @@
   position: relative;
   border-radius: 8px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -240,7 +246,7 @@
   gap: 12px;
   padding: 12px 12px;
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(9, 14, 23, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.05);
   color: #dbe4f0;
   font-size: 14px;
@@ -270,7 +276,7 @@
   display: flex;
   gap: 14px;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
@@ -359,13 +365,29 @@
   }
 }
 
+@media (max-width: 900px) {
+  .heroGrid {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .welcomeBox {
+    padding: 10px 0 0;
+  }
+
+  .title {
+    max-width: 14ch;
+  }
+}
+
 @media (max-width: 640px) {
   .container {
-    padding: 16px;
+    align-items: flex-start;
+    padding: 14px;
   }
 
   .heroCard {
-    padding: 18px;
+    padding: 16px;
     border-radius: 8px;
   }
 
@@ -378,12 +400,18 @@
     grid-template-columns: 1fr;
   }
 
+  .welcomeBox {
+    padding: 6px 0 0;
+  }
+
   .title {
     max-width: none;
+    line-height: 1.05;
   }
 
   .ctaRow {
     align-items: stretch;
+    gap: 12px;
   }
 
   .button {
@@ -394,16 +422,13 @@
     max-width: none;
   }
 
-  .welcomeBox {
-    padding: 20px;
-  }
-
-  .title {
-    font-size: clamp(1.8rem, 10vw, 2.6rem);
-  }
-
   .description {
     font-size: 14px;
+  }
+
+  .summaryItem,
+  .feature {
+    gap: 10px;
   }
 
   .feature {

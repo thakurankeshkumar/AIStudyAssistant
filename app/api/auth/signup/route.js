@@ -1,7 +1,12 @@
-import { connectDB } from "@/lib/db";
+import {
+  connectDB,
+  databaseUnavailableResponse,
+  isDatabaseConnectionError,
+} from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
@@ -10,7 +15,7 @@ export async function POST(req) {
     const { name, username, password } = await req.json();
 
     if (!name || !username || !password) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Name, username and password required" },
         { status: 400 }
       );
@@ -19,7 +24,7 @@ export async function POST(req) {
     // 🔹 Check if user exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return Response.json(
+      return NextResponse.json(
         { error: "User already exists" },
         { status: 400 }
       );
@@ -60,10 +65,14 @@ export async function POST(req) {
       }
     );
 
-  } catch (error) {
+    } catch (error) {
     console.error("SIGNUP ERROR:", error);
 
-    return Response.json(
+    if (isDatabaseConnectionError(error)) {
+      return databaseUnavailableResponse();
+    }
+
+    return NextResponse.json(
       {
         error: "Signup failed",
         details: error.message,

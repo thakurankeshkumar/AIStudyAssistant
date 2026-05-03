@@ -140,9 +140,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b0f17] px-4 py-4 text-slate-100 lg:px-6 lg:py-6">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl overflow-hidden rounded-lg border border-white/10 bg-[#0d121b]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-        <aside className="flex w-65 shrink-0 flex-col border-r border-white/10 bg-[#0c1118] p-4">
+    <main className="hero-pattern min-h-screen px-3 py-3 text-slate-100 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
+      <div className="mx-auto flex min-h-[calc(100dvh-1.5rem)] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0d121b]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] md:min-h-[calc(100dvh-2rem)] md:flex-row">
+        <aside className="flex w-full shrink-0 flex-col border-b border-white/10 bg-[#0c1118] p-4 md:w-65 md:border-b-0 md:border-r">
           <Link href="/home" className="mb-5 text-sm text-slate-400 transition hover:text-white">
             ← Back to chat
           </Link>
@@ -151,13 +151,13 @@ export default function SettingsPage() {
             <h1 className="mt-2 text-2xl font-semibold text-white">Account</h1>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="flex gap-2 overflow-x-auto pb-1 md:block md:space-y-1 md:overflow-visible md:pb-0">
             {sections.map((section) => (
               <button
                 key={section}
                 type="button"
                 onClick={() => setActiveSection(section)}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-sm transition ${
+                className={`flex min-w-fit items-center justify-between gap-4 rounded-lg px-3 py-3 text-left text-sm transition md:w-full ${
                   activeSection === section
                     ? "bg-white/10 text-white"
                     : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -169,7 +169,7 @@ export default function SettingsPage() {
             ))}
           </nav>
 
-          <div className="mt-6 rounded-lg border border-white/10 bg-white/5 p-4">
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/5 p-4 md:mt-6">
             <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Profile</p>
             <p className="mt-2 text-base font-medium text-white">{profile.name || "User"}</p>
             <p className="text-sm text-slate-400">@{profile.username || "unknown"}</p>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
 
         <section className="min-w-0 flex-1 overflow-hidden bg-[#0b0f17]">
           <div className="flex h-full min-h-0 flex-col">
-            <header className="border-b border-white/10 px-6 py-5">
+            <header className="border-b border-white/10 px-4 py-4 sm:px-6 sm:py-5">
               <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Control center</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Manage your account</h2>
               <p className="mt-2 text-sm text-slate-400">
@@ -186,7 +186,7 @@ export default function SettingsPage() {
               </p>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
               {loading ? (
                 <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-slate-400">
                   Loading account settings...
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                   </section>
 
                   <section className="rounded-lg border border-white/10 bg-white/5 p-5">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Chats</p>
                         <h3 className="mt-2 text-xl font-semibold text-white">Manage stored chat history</h3>
@@ -254,7 +254,7 @@ export default function SettingsPage() {
                         chats.map((chat) => (
                           <div
                             key={chat._id}
-                            className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#0b0f17] px-4 py-3"
+                            className="flex flex-col gap-3 rounded-lg border border-white/10 bg-[#0b0f17] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                           >
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium text-white">{chat.title || "New chat"}</p>
@@ -264,7 +264,7 @@ export default function SettingsPage() {
                               type="button"
                               onClick={() => void handleDeleteChat(chat._id)}
                               disabled={deletingChatId === chat._id}
-                              className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs font-medium text-rose-100 transition hover:border-rose-300/40 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="w-full rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs font-medium text-rose-100 transition hover:border-rose-300/40 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
                               {deletingChatId === chat._id ? "Deleting..." : "Delete"}
                             </button>
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={handleDeleteAccount}
                         disabled={deletingAccount}
-                        className="rounded-full border border-rose-300/30 bg-rose-500/20 px-4 py-2.5 text-sm font-medium text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-full rounded-full border border-rose-300/30 bg-rose-500/20 px-4 py-2.5 text-sm font-medium text-rose-50 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                       >
                         {deletingAccount ? "Deleting..." : "Delete account"}
                       </button>

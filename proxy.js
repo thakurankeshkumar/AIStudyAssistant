@@ -55,15 +55,13 @@ async function isTokenValid(token) {
   }
 }
 
-export async function middleware(req) {
+export async function proxy(req) {
   const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
 
-  // Public routes
   const isAuthPage = pathname === "/" || pathname === "/login" || pathname === "/signup";
   const isHomePage = pathname.startsWith("/home");
 
-  // If user is NOT logged in and tries to access protected page
   if (!token && isHomePage) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
@@ -77,7 +75,6 @@ export async function middleware(req) {
       return res;
     }
 
-    // If user IS logged in and tries to access landing/login/signup
     if (isAuthPage) {
       return NextResponse.redirect(new URL("/home", req.url));
     }
@@ -86,7 +83,6 @@ export async function middleware(req) {
   return NextResponse.next();
 }
 
-// Apply to all routes except static files
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

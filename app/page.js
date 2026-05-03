@@ -86,7 +86,7 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#060913] text-foreground">
       <section className="hero-pattern relative min-h-screen border-b border-white/10">
-        <header className="fade-in-up relative z-10 grid w-full grid-cols-[1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-4 sm:px-8 lg:grid-cols-[260px_1fr_auto] lg:px-10">
+        <header className="fade-in-up relative z-10 grid w-full grid-cols-1 items-start gap-4 border-b border-white/10 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8 lg:grid-cols-[260px_1fr_auto] lg:px-10">
           <Link href="/" className="group flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/12 text-sm font-black text-amber-200 shadow-[0_0_30px_rgba(240,179,94,0.14)]">
               SA
@@ -109,7 +109,7 @@ export default function Home() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
             <Link href="/login" className="btn-secondary px-4 py-2 text-sm">
               Log in
             </Link>
@@ -119,7 +119,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="relative z-10 grid min-h-[calc(100vh-73px)] w-full grid-cols-1 lg:grid-cols-[96px_minmax(0,0.92fr)_minmax(460px,1.08fr)]">
+        <div className="relative z-10 grid min-h-[calc(100dvh-73px)] w-full grid-cols-1 lg:grid-cols-[96px_minmax(0,0.92fr)_minmax(460px,1.08fr)]">
           <aside className="hidden border-r border-white/10 px-5 py-8 lg:flex lg:flex-col lg:justify-between">
             <div className="space-y-4">
               <div className="h-16 w-px bg-amber-300/45" />
@@ -140,17 +140,17 @@ export default function Home() {
             </div>
           </aside>
 
-          <section className="flex min-w-0 flex-col justify-center border-b border-white/10 px-5 py-12 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
+          <section className="flex min-w-0 flex-col justify-center border-b border-white/10 px-5 py-10 sm:px-8 sm:py-12 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <div className="fade-in-up [animation-delay:80ms]">
               <p className="eyebrow">AI study workspace for PDFs, notes, and revision</p>
-              <h1 className="mt-6 text-5xl font-semibold leading-[0.98] text-white sm:text-6xl xl:text-8xl">
+              <h1 className="mt-6 text-4xl font-semibold leading-[1.02] text-white sm:text-6xl xl:text-8xl">
                 Study from the material you already have.
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-muted sm:text-lg">
                 Upload lecture PDFs, ask focused questions, generate exam practice, and keep
                 every session organized inside a clean product workspace.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 grid gap-3 sm:flex sm:flex-row">
                 <Link href="/signup" className="btn-primary px-5 py-3 text-sm">
                   Start studying
                 </Link>
@@ -176,7 +176,7 @@ export default function Home() {
 
           <aside className="relative min-w-0 overflow-hidden px-5 py-8 sm:px-8 lg:px-10 xl:px-14">
             <div className="landing-sweep" />
-            <div className="product-frame fade-in-up relative z-10 h-full min-h-[620px] [animation-delay:180ms]">
+            <div className="product-frame fade-in-up relative z-10 h-full min-h-[520px] [animation-delay:180ms] sm:min-h-[620px]">
               <div className="grid h-full grid-rows-[auto_1fr_auto]">
                 <div className="flex items-center justify-between border-b border-white/10 p-4">
                   <div>
@@ -188,7 +188,7 @@ export default function Home() {
                   </span>
                 </div>
 
-                <div className="grid min-h-0 gap-px bg-white/10 md:grid-cols-[0.72fr_1.28fr]">
+                <div className="grid min-h-0 gap-px bg-white/10 lg:grid-cols-[0.72fr_1.28fr]">
                   <div className="bg-[#0c121f] p-4">
                     <div className="rounded-lg border border-white/10 bg-black/20 p-3">
                       <p className="text-xs uppercase tracking-[0.28em] text-muted">Chats</p>
@@ -274,7 +274,7 @@ export default function Home() {
         <div className="grid w-full lg:grid-cols-[36%_64%]">
           <div className="border-b border-white/10 px-5 py-14 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <p className="eyebrow">Workflow</p>
-            <h2 className="mt-5 text-4xl font-semibold leading-tight text-white lg:text-5xl">
+            <h2 className="mt-5 text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
               One uninterrupted path from PDF to revision.
             </h2>
             <p className="mt-5 max-w-xl text-base leading-8 text-muted">
@@ -301,7 +301,7 @@ export default function Home() {
         <div className="grid w-full xl:grid-cols-[1.05fr_0.95fr]">
           <div className="min-h-[520px] border-b border-white/10 px-5 py-14 sm:px-8 lg:px-10 xl:border-b-0 xl:border-r xl:px-14">
             <p className="eyebrow">Product depth</p>
-            <h2 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight text-white lg:text-6xl">
+            <h2 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-6xl">
               It behaves like a study product, not a single prompt box.
             </h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
@@ -330,14 +330,14 @@ export default function Home() {
         <div className="grid w-full lg:grid-cols-[1fr_1.2fr]">
           <div className="border-b border-white/10 px-5 py-14 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <p className="eyebrow">Ready for daily study</p>
-            <h2 className="mt-5 text-4xl font-semibold leading-tight text-white lg:text-5xl">
+            <h2 className="mt-5 text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
               Start with one PDF. Leave with a clearer plan.
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-muted">
               The app supports the full study loop already available in your routes: signup,
               login, upload, ask, chat history, and account management.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 grid gap-3 sm:flex sm:flex-row">
               <Link href="/signup" className="btn-primary px-5 py-3 text-sm">
                 Create account
               </Link>
@@ -365,7 +365,7 @@ export default function Home() {
         <div className="grid w-full xl:grid-cols-[0.9fr_1.1fr]">
           <div className="border-b border-white/10 px-5 py-14 sm:px-8 lg:px-10 xl:border-b-0 xl:border-r xl:px-14">
             <p className="eyebrow">Learning outcomes</p>
-            <h2 className="mt-5 text-4xl font-semibold leading-tight text-white lg:text-6xl">
+            <h2 className="mt-5 text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-6xl">
               Designed for the messy middle of studying.
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-muted">
@@ -395,7 +395,7 @@ export default function Home() {
               className="min-h-72 border-b border-white/10 px-5 py-12 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 last:lg:border-r-0"
             >
               <p className="text-sm font-semibold text-amber-200">0{index + 1}</p>
-              <h2 className="mt-8 text-3xl font-semibold text-white">{title}</h2>
+              <h2 className="mt-8 text-2xl font-semibold text-white sm:text-3xl">{title}</h2>
               <p className="mt-4 max-w-md text-sm leading-7 text-muted">{description}</p>
             </article>
           ))}
@@ -406,7 +406,7 @@ export default function Home() {
         <div className="grid w-full lg:grid-cols-[34%_66%]">
           <div className="border-b border-white/10 px-5 py-14 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <p className="eyebrow">FAQ</p>
-            <h2 className="mt-5 text-4xl font-semibold leading-tight text-white lg:text-5xl">
+            <h2 className="mt-5 text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
               Clear answers before users sign in.
             </h2>
           </div>
@@ -426,7 +426,7 @@ export default function Home() {
         <div className="grid min-h-[520px] w-full lg:grid-cols-[1.15fr_0.85fr]">
           <div className="flex flex-col justify-center border-b border-white/10 px-5 py-14 sm:px-8 lg:border-b-0 lg:border-r lg:px-10 xl:px-14">
             <p className="eyebrow">Start now</p>
-            <h2 className="mt-5 max-w-4xl text-5xl font-semibold leading-[1.02] text-white lg:text-7xl">
+            <h2 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-7xl">
               Build your next revision session around one useful question.
             </h2>
           </div>
@@ -435,7 +435,7 @@ export default function Home() {
               Create an account, upload study material, and turn scattered notes into a
               focused workspace for asking, checking, and revising.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 grid gap-3 sm:flex sm:flex-row">
               <Link href="/signup" className="btn-primary px-5 py-3 text-sm">
                 Create account
               </Link>

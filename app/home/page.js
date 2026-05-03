@@ -117,6 +117,7 @@ export default function Home() {
   const [settingsDialog, setSettingsDialog] = useState(null);
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
   const [welcomeSaving, setWelcomeSaving] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const starterPrompts = [
     "Summarize this PDF in simple words",
@@ -144,6 +145,10 @@ export default function Home() {
     selectedChatIdRef.current = chatId;
     setSelectedChatId(chatId);
     setIsDraftChat(chatId === "");
+
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
   }, [clearPendingFileSelection]);
 
   const dismissStatus = useCallback(() => {
@@ -176,7 +181,6 @@ export default function Home() {
     [history, selectedChatId]
   );
 
-  const activeChatTitle = selectedChat?.title || "New chat";
   const showWelcomePanel = !selectedChat || (selectedChat.messages?.length || 0) === 0;
   const welcomeCopy = useMemo(() => getWelcomeCopy(displayName), [displayName]);
 
@@ -298,6 +302,19 @@ export default function Home() {
     };
 
     void loadProfile();
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const syncSidebar = () => {
+      setSidebarOpen(mediaQuery.matches);
+    };
+
+    syncSidebar();
+    mediaQuery.addEventListener("change", syncSidebar);
+
+    return () => mediaQuery.removeEventListener("change", syncSidebar);
   }, []);
 
   const visibleHistory = useMemo(() => {
@@ -823,71 +840,129 @@ export default function Home() {
   const showUploadAction = Boolean(file);
 
   return (
-    <main className="h-screen overflow-hidden bg-[#0b0f17] text-slate-100">
-      <div className="flex h-full min-h-0 flex-col lg:flex-row">
-        <aside className="flex min-h-0 flex-col border-b border-white/10 bg-[#0d121b] lg:h-full lg:w-[320px] lg:border-b-0 lg:border-r">
-          <div className="flex min-h-0 flex-1 flex-col p-4">
-            <div className="rounded-lg border border-white/10 bg-linear-to-br from-[#141c2b] to-[#101726] p-3 shadow-lg shadow-black/25">
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Study Assistant</p>
-                  <h1 className="mt-1 truncate text-lg font-semibold text-white">Chats</h1>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleNewChat}
-                  disabled={creatingChat}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:border-amber-400/40 hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {creatingChat ? "Creating..." : "New"}
-                </button>
-              </div>
+    <main className="h-[100dvh] overflow-hidden bg-[#080c14] text-slate-100">
+      <div className="relative flex h-full min-h-0 flex-col lg:flex-row">
+        {sidebarOpen ? (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-30 bg-black/55 backdrop-blur-sm lg:hidden"
+            aria-label="Close sidebar overlay"
+          />
+        ) : null}
 
-              <div className="mt-3 rounded-lg border border-white/10 bg-[#0e1523] px-3 py-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
-                  <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search chats"
-                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-                  />
-                </label>
-              </div>
+        {!sidebarOpen ? (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="absolute left-3 top-3 z-30 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-[#0b111d]/95 text-slate-100 shadow-lg shadow-black/30 transition hover:bg-[#111827] lg:fixed"
+            aria-label="Open sidebar"
+            title="Open sidebar"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h10M4 18h16" />
+            </svg>
+          </button>
+        ) : null}
 
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
-                <span>{historyLoading ? "Loading chats..." : `${visibleHistory.length} shown`}</span>
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 min-h-0 border-r border-white/10 bg-[#0b111d] shadow-2xl shadow-black/40 transition-[width,opacity,transform] duration-200 lg:static lg:h-full lg:shadow-none ${
+            sidebarOpen
+              ? "flex w-[min(86vw,320px)] flex-col opacity-100 lg:w-[260px]"
+              : "pointer-events-none flex w-[min(86vw,320px)] -translate-x-full flex-col opacity-0 lg:pointer-events-auto lg:w-0 lg:-translate-x-3 lg:overflow-hidden"
+          }`}
+        >
+          <div className="flex min-h-0 flex-1 flex-col px-2 py-3">
+            <div className="flex items-center justify-between px-2 pb-3">
+              <div className="flex items-center gap-2 rounded-xl px-1 py-1">
+                <span className="grid h-9 w-9 place-items-center rounded-xl border border-amber-200/15 bg-linear-to-br from-amber-300/18 to-white/[0.04] text-sm font-black text-amber-100 shadow-[0_10px_30px_rgba(240,179,94,0.08)]">
+                  SA
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-white">Study desk</span>
+                  <span className="block text-[11px] text-slate-500">Focused chat</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-xl text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
+                aria-label="Hide sidebar"
+                title="Hide sidebar"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 5h14v14H5zM9 5v14" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-1 rounded-2xl border border-white/[0.06] bg-[#101624] p-1">
+              <button
+                type="button"
+                onClick={handleNewChat}
+                disabled={creatingChat}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-100 transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 5h7M12 19h7M5 12h14M5 5h3v3H5zM5 16h3v3H5z" />
+                </svg>
+                <span>{creatingChat ? "Creating..." : "New chat"}</span>
+              </button>
+
+              <label className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-100 transition focus-within:bg-white/[0.07] hover:bg-white/[0.07]">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search chats"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-300"
+                />
                 {searchTerm.trim() ? (
                   <button
                     type="button"
                     onClick={() => setSearchTerm("")}
-                    className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-300 transition hover:bg-white/10"
+                    className="rounded p-0.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                    aria-label="Clear search"
+                    title="Clear search"
                   >
-                    Clear search
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
-                ) : (
-                  <span>{history.length} total</span>
-                )}
-              </div>
+                ) : null}
+              </label>
             </div>
 
-            <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-2">
+            <div className="mx-1 mt-3 rounded-2xl border border-amber-200/10 bg-amber-200/[0.045] px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-medium text-amber-100">Study mode</span>
+                <span className="rounded-full bg-amber-200/10 px-2 py-0.5 text-[11px] text-amber-100">
+                  {fileId || selectedChat?.fileId ? "PDF" : "General"}
+                </span>
+              </div>
+              <p className="mt-1 truncate text-[11px] text-slate-500">
+                {historyLoading ? "Syncing chats" : `${history.length} saved conversations`}
+              </p>
+            </div>
+
+            <div className="mt-5 min-h-0 flex-1 overflow-y-auto px-1 pr-2">
+              <div className="flex items-center justify-between px-3 pb-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Recents</p>
+                <span className="text-[11px] text-slate-600">{visibleHistory.length}</span>
+              </div>
               {historyLoading ? (
-                <div className="rounded-lg border border-white/5 bg-white/3 p-3 text-sm text-slate-500">
+                <div className="rounded-lg px-3 py-2 text-sm text-slate-400">
                   Loading chats...
                 </div>
               ) : visibleHistory.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-white/10 bg-white/3 p-3 text-sm leading-6 text-slate-500">
-                  No saved chats yet. Ask a question to create your first chat.
+                <div className="rounded-lg px-3 py-2 text-sm leading-6 text-slate-400">
+                  No chats yet.
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {visibleHistory.map((chat) => {
                     const isSelected = chat._id === selectedChatId;
                     const title = chat.title || "New chat";
@@ -895,10 +970,10 @@ export default function Home() {
                     return (
                       <div
                         key={chat._id}
-                        className={`group relative flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-200 ${
+                        className={`group relative flex items-center gap-1 rounded-xl transition ${
                           isSelected
-                            ? "border border-amber-400/20 bg-amber-400/10"
-                            : "border border-transparent hover:border-white/10 hover:bg-white/5"
+                            ? "bg-amber-300/10 text-white shadow-[inset_3px_0_0_rgba(240,179,94,0.65)]"
+                            : "text-slate-300 hover:bg-white/[0.06] hover:text-slate-50"
                         }`}
                       >
                         <button
@@ -907,12 +982,13 @@ export default function Home() {
                             selectChat(chat._id);
                             setFileId(chat.fileId ? String(chat.fileId) : "");
                           }}
-                          className="min-w-0 flex-1 truncate text-left text-sm leading-snug text-slate-200 hover:text-white"
+                          className="min-w-0 flex-1 truncate px-3 py-2.5 text-left text-sm"
+                          title={title}
                         >
                           {title}
                         </button>
 
-                        <div className="hidden gap-1 group-hover:flex">
+                        <div className="mr-1 hidden shrink-0 items-center gap-0.5 group-hover:flex">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -927,11 +1003,11 @@ export default function Home() {
                                 value: title,
                               });
                             }}
-                            className="rounded p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
+                            className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
                             title="Rename chat"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                           <button
@@ -940,24 +1016,24 @@ export default function Home() {
                               e.stopPropagation();
                               setDeletingChatId(chat._id);
                             }}
-                            className="rounded p-1 text-slate-400 hover:bg-rose-400/20 hover:text-rose-400 transition"
+                            className="rounded-lg p-1 text-slate-400 hover:bg-rose-400/20 hover:text-rose-300 transition"
                             title="Delete chat"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
                         </div>
 
                         {deletingChatId === chat._id && (
-                          <div className="absolute left-0 right-0 top-0 bottom-0 flex items-center justify-center gap-2 rounded-lg bg-black/80 z-50">
+                          <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 rounded-lg bg-[#0b111d]/95">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteChat(chat._id);
                               }}
-                              className="rounded px-2 py-1 text-xs font-medium bg-rose-500 text-white hover:bg-rose-600"
+                              className="rounded-lg bg-rose-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-rose-600"
                             >
                               Delete
                             </button>
@@ -967,7 +1043,7 @@ export default function Home() {
                                 e.stopPropagation();
                                 setDeletingChatId("");
                               }}
-                              className="rounded px-2 py-1 text-xs font-medium bg-slate-600 text-white hover:bg-slate-700"
+                              className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/15"
                             >
                               Cancel
                             </button>
@@ -980,108 +1056,105 @@ export default function Home() {
               )}
             </div>
 
-            <div className="mt-4 space-y-3 rounded-lg border border-white/10 bg-white/5 p-4">
+            <div className="mt-3 border-t border-white/[0.08] px-1 pt-2">
               <button
                 type="button"
                 onClick={() => void openSettings()}
-                className="w-full rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
+                className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/[0.07]"
               >
-                Settings
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-linear-to-br from-amber-300/20 to-white/[0.05] text-xs font-semibold text-amber-100">
+                  {(displayName || "U").slice(0, 1).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-white">{displayName || "User"}</span>
+                  <span className="block truncate text-xs text-slate-400">Settings</span>
+                </span>
               </button>
               <button
                 type="button"
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="w-full rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm font-medium text-rose-100 transition hover:border-rose-300/40 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-1 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm text-slate-400 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loggingOut ? "Logging out..." : "Logout"}
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.75 9V5.75A1.75 1.75 0 0014 4H6.75A1.75 1.75 0 005 5.75v12.5C5 19.216 5.784 20 6.75 20H14a1.75 1.75 0 001.75-1.75V15M12 12h8m0 0l-3-3m3 3l-3 3" />
+                </svg>
+                {loggingOut ? "Logging out..." : "Log out"}
               </button>
             </div>
           </div>
         </aside>
 
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0b0f17]">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#080d18]">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8">
-              <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-                {showWelcomePanel ? (
-                  <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-                    <div className="max-w-3xl space-y-8">
-                      <div className="space-y-3">
-                        <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/12 text-lg font-black text-amber-200">
-                          SA
-                        </div>
-                        <h3 className="text-3xl font-bold text-white sm:text-4xl">
-                          {welcomeCopy.greeting}
-                        </h3>
-                        <p className="mx-auto max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
-                          {welcomeCopy.message}
-                        </p>
-                      </div>
+            <header className="flex min-h-12 shrink-0 items-center justify-between gap-3 px-4 py-2 pl-16 sm:px-6 lg:justify-end lg:pl-6">
+              <p className="truncate text-sm font-medium text-slate-300 lg:hidden">
+                {selectedChat?.title || "Study desk"}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full border border-white/10 bg-[#101624] px-3 py-1 text-xs text-slate-300">
+                  {fileId || selectedChat?.fileId ? "PDF attached" : "General"}
+                </span>
+                <span className="hidden rounded-full border border-white/10 bg-[#101624] px-3 py-1 text-xs text-slate-300 sm:inline-flex">
+                  {selectedChat?.messages?.length || 0} messages
+                </span>
+              </div>
+            </header>
 
-                      <div className="space-y-3 text-left">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Quick start prompts</p>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {starterPrompts.map((prompt) => (
-                            <button
-                              key={prompt}
-                              type="button"
-                              onClick={() => setQuestion(prompt)}
-                              className="group relative rounded-lg border border-white/10 bg-linear-to-br from-white/5 to-white/2 px-4 py-4 text-left text-sm text-slate-200 transition-all duration-300 hover:border-amber-400/30 hover:from-amber-400/10 hover:to-amber-400/5"
-                            >
-                              <span className="font-medium group-hover:text-white">{prompt}</span>
-                              <div className="absolute right-3 top-3 rounded-full bg-amber-400/0 p-2 text-amber-400 transition-all group-hover:bg-amber-400/10">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_50%_0%,rgba(240,179,94,0.055),transparent_34%),linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[length:auto,44px_44px] px-4 py-6 sm:px-6">
+              <div className="mx-auto flex w-full max-w-3xl flex-col">
+                {showWelcomePanel ? (
+                  <div className="flex min-h-[calc(100dvh-235px)] flex-col items-center justify-center text-center">
+                    <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-sm font-black text-amber-100 shadow-[0_12px_40px_rgba(240,179,94,0.08)]">
+                      SA
+                    </div>
+                    <h2 className="text-2xl font-medium text-slate-50 sm:text-3xl">
+                      What should we study today?
+                    </h2>
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">
+                      {welcomeCopy.message}
+                    </p>
+                    <div className="mt-7 grid w-full max-w-2xl gap-2 sm:grid-cols-2">
+                        {starterPrompts.map((prompt, index) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => setQuestion(prompt)}
+                            className="group flex min-h-14 items-center gap-3 rounded-2xl border border-white/10 bg-[#101624]/90 px-4 py-3 text-left text-sm leading-6 text-slate-200 transition hover:border-amber-200/20 hover:bg-[#151c2b]"
+                          >
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xs text-amber-100 group-hover:bg-amber-300/12">
+                              0{index + 1}
+                            </span>
+                            <span>
+                              {prompt.replace(" from this PDF", "").replace(" from this file", "")}
+                            </span>
+                          </button>
+                        ))}
                     </div>
                   </div>
                 ) : selectedChat?.messages?.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-7 pb-6 pt-4">
                     {selectedChat.messages.map((message, index) => (
                       <div
                         key={`${selectedChat._id}-${index}`}
                         className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                       >
-                        <div
-                          className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${
-                            message.role === "user" ? "flex-row-reverse" : "flex-row"
-                          }`}
-                        >
-                          {message.role === "assistant" && (
-                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white">
-                              AI
-                            </div>
-                          )}
-                          
-                          <div
-                            className={`rounded-lg px-5 py-3 ${
+                        <div className={message.role === "user" ? "max-w-[92%] sm:max-w-[70%]" : "w-full"}>
+                          <p
+                            className={`whitespace-pre-wrap wrap-break-word text-left text-[15px] leading-7 ${
                               message.role === "user"
-                                ? "rounded-br-sm border border-amber-400/30 bg-linear-to-br from-amber-400/20 to-amber-400/10 text-amber-50 shadow-lg shadow-amber-500/10"
-                                : "rounded-bl-sm border border-slate-700/50 bg-linear-to-br from-slate-800 to-slate-900 text-slate-100 shadow-lg shadow-black/20"
+                                ? "rounded-[1.35rem] rounded-br-md bg-amber-300/12 px-5 py-3 text-amber-50 shadow-[inset_0_0_0_1px_rgba(240,179,94,0.12)]"
+                                : "border-l border-amber-200/20 pl-4 text-slate-100"
                             }`}
                           >
-                            <p className="whitespace-pre-wrap text-sm leading-7 sm:text-[15px] wrap-break-word">
-                              {message.content}
-                            </p>
-                          </div>
-
-                          {message.role === "user" && (
-                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-amber-400/40 to-amber-500/40 text-xs font-bold text-amber-200">
-                              You
-                            </div>
-                          )}
+                            {message.content}
+                          </p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex min-h-64 items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/3 px-6 py-12 text-center">
+                  <div className="flex min-h-64 items-center justify-center px-6 py-12 text-center">
                     <p className="text-sm text-slate-400">This chat is empty. Ask a question to get started.</p>
                   </div>
                 )}
@@ -1108,49 +1181,53 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="shrink-0 border-t border-white/10 bg-linear-to-t from-[#0c111a] to-[#0b0f17]/50 px-4 py-4 backdrop-blur lg:px-8">
+            <div className="shrink-0 bg-[#080d18] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6 sm:pb-4">
               <form
                 onSubmit={handleSend}
-                className="mx-auto flex w-full max-w-4xl flex-col gap-3 rounded-lg border border-white/10 bg-[#101624] p-3 shadow-xl shadow-black/20"
+                className="mx-auto flex w-full max-w-3xl flex-col gap-2"
               >
-                <div className="flex flex-wrap items-center gap-2">
+                {(file || selectedChat?.fileId) ? (
+                  <div className="flex flex-wrap items-center gap-2 px-1">
+                    <span className="min-w-0 truncate rounded-full border border-white/10 bg-[#101624] px-3 py-1.5 text-xs text-slate-300">
+                      {file ? file.name : "Chat PDF attached"}
+                    </span>
+                    {showUploadAction ? (
+                      <button
+                        type="button"
+                        onClick={handleUpload}
+                        disabled={uploading}
+                        className="rounded-full border border-white/10 bg-[#101624] px-3 py-1.5 text-xs font-medium text-slate-100 transition hover:bg-[#151c2b] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {uploading ? "Uploading..." : "Upload PDF"}
+                      </button>
+                    ) : null}
+                    {file ? (
+                      <button
+                        type="button"
+                        onClick={clearPendingFileSelection}
+                        className="rounded-full border border-white/10 bg-transparent px-3 py-1.5 text-xs text-slate-300 transition hover:bg-[#101624]"
+                      >
+                        Clear
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="flex items-end gap-1.5 rounded-3xl bg-[#101624] px-2.5 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_50px_rgba(0,0,0,0.22)] transition focus-within:shadow-[0_0_0_1px_rgba(240,179,94,0.3),0_18px_50px_rgba(0,0,0,0.22)] sm:gap-2 sm:px-3">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={loading || creatingChat || uploading}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mb-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    title={file ? "Change PDF" : "Attach PDF"}
+                    aria-label={file ? "Change PDF" : "Attach PDF"}
                   >
-                    {file ? "Change PDF" : "Attach PDF"}
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 5v14M5 12h14" />
+                    </svg>
                   </button>
 
-                  {showUploadAction ? (
-                    <button
-                      type="button"
-                      onClick={handleUpload}
-                      disabled={uploading}
-                      className="rounded-full border border-amber-400/30 bg-amber-400/15 px-3 py-1.5 text-xs font-medium text-amber-100 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {uploading ? "Uploading..." : "Upload PDF"}
-                    </button>
-                  ) : null}
-
-                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs text-slate-400">
-                    {file ? file.name : selectedChat?.fileId ? "Chat PDF attached" : "No draft file"}
-                  </span>
-
-                  {file ? (
-                    <button
-                      type="button"
-                      onClick={clearPendingFileSelection}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/10"
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                </div>
-
-                <div className="flex items-end gap-3">
-                  <div className="flex-1 rounded-lg border border-white/10 bg-[#101624] px-5 py-2 transition focus-within:border-amber-400/30 focus-within:bg-[#111a27] shadow-lg shadow-black/20">
+                  <div className="min-w-0 flex-1 px-1">
                     <textarea
                       value={question}
                       onChange={(event) => setQuestion(event.target.value)}
@@ -1162,24 +1239,33 @@ export default function Home() {
                           }
                         }
                       }}
-                      placeholder="Ask anything about your PDF..."
-                      rows={2}
-                      className="min-h-12 max-h-40 w-full resize-none bg-transparent text-sm text-white outline-none placeholder:text-slate-500 sm:text-[15px]"
+                      placeholder={fileId || selectedChat?.fileId ? "Ask anything about the attached PDF" : "Ask anything"}
+                      rows={1}
+                      className="max-h-36 min-h-9 w-full resize-none bg-transparent pb-1 pt-2 text-left text-[15px] leading-6 text-white outline-none placeholder:text-slate-400"
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  {showUploadAction ? (
                     <button
-                      type="submit"
-                      disabled={loading || creatingChat}
-                      className="flex items-center justify-center rounded-full bg-white p-3 text-slate-950 transition hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Send message"
+                      type="button"
+                      onClick={handleUpload}
+                      disabled={uploading}
+                      className="mb-0.5 hidden h-9 items-center rounded-full bg-amber-300/10 px-3 text-xs font-medium text-amber-50 transition hover:bg-amber-300/15 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                      </svg>
+                      {uploading ? "Uploading" : "Upload"}
                     </button>
-                  </div>
+                  ) : null}
+
+                  <button
+                    type="submit"
+                    disabled={loading || creatingChat}
+                    className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-45"
+                    title="Send message"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-6 6m6-6l6 6" />
+                    </svg>
+                  </button>
                 </div>
 
                 {/* Hidden file input */}
@@ -1197,8 +1283,8 @@ export default function Home() {
       </div>
 
       {showSettings ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md">
-          <div className="relative flex h-[min(86vh,760px)] w-full max-w-7xl overflow-hidden rounded-lg border border-white/10 bg-[#0d121b]/95 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 px-3 py-3 backdrop-blur-md sm:px-4 sm:py-6">
+          <div className="relative flex h-[min(94dvh,760px)] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0d121b]/95 shadow-[0_30px_90px_rgba(0,0,0,0.55)] md:flex-row">
             <button
               type="button"
               onClick={() => setShowSettings(false)}
@@ -1207,20 +1293,20 @@ export default function Home() {
               Close
             </button>
 
-            <aside className="flex w-65 shrink-0 flex-col border-r border-white/10 bg-[#0c1118] p-4">
-              <div className="mb-4 pr-16">
+            <aside className="flex max-h-[34dvh] w-full shrink-0 flex-col border-b border-white/10 bg-[#0c1118] p-4 md:max-h-none md:w-65 md:border-b-0 md:border-r">
+              <div className="mb-4 pr-16 md:pr-0">
                 <p className="text-[10px] uppercase tracking-[0.38em] text-slate-500">Settings</p>
                 <h3 className="mt-2 text-2xl font-semibold text-white">Account</h3>
                 <p className="mt-2 text-sm text-slate-400">Manage your chats, usage, and account controls.</p>
               </div>
 
-              <nav className="space-y-1 overflow-y-auto pr-1">
+              <nav className="flex gap-2 overflow-x-auto pb-1 pr-1 md:block md:space-y-1 md:overflow-y-auto md:pb-0">
                 {settingsSections.map((section) => (
                   <button
                     key={section}
                     type="button"
                     onClick={() => setSettingsSection(section)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-sm transition ${
+                    className={`flex min-w-fit items-center justify-between gap-4 rounded-lg px-3 py-3 text-left text-sm transition md:w-full ${
                       settingsSection === section
                         ? "bg-white/10 text-white"
                         : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -1232,7 +1318,7 @@ export default function Home() {
                 ))}
               </nav>
 
-              <div className="mt-6 rounded-lg border border-white/10 bg-white/5 p-4">
+              <div className="mt-4 hidden rounded-lg border border-white/10 bg-white/5 p-4 md:block">
                 <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Profile</p>
                 <p className="mt-2 text-base font-medium text-white">{settingsData?.profile?.name || displayName || "User"}</p>
                 <p className="mt-1 break-all text-sm leading-5 text-slate-400">@{settingsData?.profile?.username || "unknown"}</p>
@@ -1244,7 +1330,7 @@ export default function Home() {
 
             <section className="min-w-0 flex-1 overflow-hidden bg-[#0b0f17]">
               <div className="flex h-full min-h-0 flex-col">
-                <header className="border-b border-white/10 px-6 py-5">
+                <header className="border-b border-white/10 px-4 py-4 sm:px-6 sm:py-5">
                   <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Control center</p>
                   <h4 className="mt-2 text-2xl font-semibold text-white">{settingsSection}</h4>
                   <p className="mt-2 text-sm text-slate-400">
@@ -1252,7 +1338,7 @@ export default function Home() {
                   </p>
                 </header>
 
-                <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
                   {settingsLoading ? (
                     <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-slate-400">
                       Loading account settings...
@@ -1467,7 +1553,7 @@ export default function Home() {
                               <button
                                 type="submit"
                                 disabled={settingsUpdatingAccount}
-                                className="rounded-full border border-amber-300/30 bg-amber-400/15 px-4 py-2.5 text-sm font-medium text-amber-50 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="w-full rounded-full border border-amber-300/30 bg-amber-400/15 px-4 py-2.5 text-sm font-medium text-amber-50 transition hover:bg-amber-400/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                               >
                                 {settingsUpdatingAccount ? "Updating..." : "Update account"}
                               </button>
@@ -1514,7 +1600,7 @@ export default function Home() {
       ) : null}
 
       {settingsDialog ? (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-md">
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-6 backdrop-blur-md sm:px-4">
           <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#0d121b]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
             <p className="text-xs uppercase tracking-[0.38em] text-slate-500">Confirmation</p>
             <h3 className="mt-3 text-2xl font-semibold text-white">{settingsDialog.title}</h3>
@@ -1538,7 +1624,7 @@ export default function Home() {
               </label>
             ) : null}
 
-            <div className="mt-6 flex items-center justify-end gap-3">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
               <button
                 type="button"
                 onClick={closeSettingsDialog}
@@ -1563,8 +1649,8 @@ export default function Home() {
       ) : null}
 
       {showWelcomeOverlay ? (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md">
-          <div className="relative w-full max-w-6xl overflow-hidden rounded-lg border border-white/10 bg-[#0d121b]/96 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-black/70 px-3 py-4 backdrop-blur-md sm:px-4 sm:py-6">
+          <div className="relative max-h-[94dvh] w-full max-w-6xl overflow-y-auto rounded-lg border border-white/10 bg-[#0d121b]/96 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.14),transparent_28%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_45%)]" />
             <div className="relative grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
@@ -1573,7 +1659,7 @@ export default function Home() {
                   Welcome experience
                 </div>
 
-                <h2 className="mt-5 max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                <h2 className="mt-5 max-w-2xl text-3xl font-semibold text-white sm:text-5xl">
                   Built for faster revision, clearer notes, and better answers.
                 </h2>
 
@@ -1581,7 +1667,7 @@ export default function Home() {
                   Hey <span className="text-amber-300">{displayName || "there"}</span>, your workspace is ready. Start with a question, attach a document when you need grounded answers, or just explore with general study help.
                 </p>
 
-                <div className="mt-8 flex flex-wrap gap-3">
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                   <button
                     type="button"
                     onClick={() => void handleWelcomeStart()}

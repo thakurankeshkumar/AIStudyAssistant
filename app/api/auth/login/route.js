@@ -1,7 +1,12 @@
-import { connectDB } from "@/lib/db";
+import {
+  connectDB,
+  databaseUnavailableResponse,
+  isDatabaseConnectionError,
+} from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
@@ -10,7 +15,7 @@ export async function POST(req) {
     const { username, password } = await req.json();
 
     if (!username || !password) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Username and password required" },
         { status: 400 }
       );
@@ -18,12 +23,12 @@ export async function POST(req) {
 
     const user = await User.findOne({ username });
     if (!user) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     // 🔹 Create JWT
@@ -46,9 +51,14 @@ export async function POST(req) {
       }
     );
 
-  } catch (error) {
+    } catch (error) {
     console.error("LOGIN ERROR:", error);
-    return Response.json(
+
+    if (isDatabaseConnectionError(error)) {
+      return databaseUnavailableResponse();
+    }
+
+    return NextResponse.json(
       { error: "Login failed", details: error.message },
       { status: 500 }
     );

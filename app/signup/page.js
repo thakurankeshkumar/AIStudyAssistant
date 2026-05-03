@@ -60,14 +60,14 @@ export default function SignupPage() {
 
 	return (
 		<main className="hero-pattern min-h-screen text-foreground">
-			<header className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-8 lg:px-10">
-				<Link href="/" className="flex items-center gap-3">
+			<header className="flex flex-col items-stretch gap-4 border-b border-white/10 px-5 py-4 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between sm:px-8 lg:px-10">
+				<Link href="/" className="flex min-w-0 items-center gap-3">
 					<span className="grid h-10 w-10 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/12 text-sm font-black text-amber-200">
 						SA
 					</span>
-					<span>
+					<span className="min-w-0">
 						<span className="block text-sm font-semibold text-white">Study Assistant</span>
-						<span className="block text-xs text-muted">Create workspace</span>
+						<span className="block truncate text-xs text-muted">Create workspace</span>
 					</span>
 				</Link>
 
@@ -76,11 +76,11 @@ export default function SignupPage() {
 				</Link>
 			</header>
 
-			<section className="mx-auto grid min-h-[calc(100vh-73px)] w-full max-w-7xl items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
+			<section className="mx-auto grid min-h-[calc(100dvh-73px)] w-full max-w-7xl items-center gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
 				<div>
 					<div className="fade-in-up">
 						<p className="eyebrow">Create account</p>
-						<h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+						<h1 className="mt-5 max-w-3xl text-3xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
 							Build a clean study workspace in one step.
 						</h1>
 						<p className="mt-5 max-w-2xl text-base leading-8 text-muted">
@@ -115,7 +115,7 @@ export default function SignupPage() {
 				<div className="product-frame fade-in-up p-5 sm:p-6 [animation-delay:120ms]">
 					<div className="border-b border-white/10 pb-5">
 						<p className="text-xs uppercase tracking-[0.32em] text-muted">New workspace</p>
-						<h2 className="mt-2 text-3xl font-semibold text-white">Sign up</h2>
+						<h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Sign up</h2>
 						<p className="mt-3 text-sm leading-6 text-muted">
 							Your account is created and signed in through the existing signup route.
 						</p>

@@ -34,32 +34,36 @@ export async function POST(req) {
 
     const activeFileId = fileId || chat.fileId;
 
-    if (!activeFileId) {
-      return Response.json(
-        { error: "Upload a PDF for this chat before asking a question" },
-        { status: 400 }
-      );
-    }
-
-    const doc = await Document.findById(activeFileId);
-
-    if (!doc) {
-      return Response.json({ error: "Document not found" }, { status: 404 });
-    }
-
-    const contextChunks = doc.chunks.slice(0, 5).join(" ");
-
-    const prompt = `
+    let prompt = `
     You are a helpful AI study assistant.
 
-    Based ONLY on the following study material:
-    ${contextChunks}
-
-    Answer the question:
+    Answer the question clearly and concisely:
     ${question}
 
-    the answer should be short and clean answer so that easy to understand and if the answer is not present or related to the material then also answer it based on you information and it should be accurate ".
+    If the user has not provided study material, answer using your general knowledge.
     `;
+
+    if (activeFileId) {
+      const doc = await Document.findById(activeFileId);
+
+      if (!doc) {
+        return Response.json({ error: "Document not found" }, { status: 404 });
+      }
+
+      const contextChunks = doc.chunks.slice(0, 5).join(" ");
+
+      prompt = `
+      You are a helpful AI study assistant.
+
+      Based ONLY on the following study material:
+      ${contextChunks}
+
+      Answer the question:
+      ${question}
+
+      the answer should be short and clean answer so that easy to understand and if the answer is not present or related to the material then also answer it based on you information and it should be accurate ".
+      `;
+    }
 
     const response = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
@@ -82,9 +86,7 @@ export async function POST(req) {
           { role: "assistant", content: answer },
         ],
       },
-      $set: {
-        fileId: activeFileId,
-      },
+      ...(activeFileId ? { $set: { fileId: activeFileId } } : {}),
     });
 
     return Response.json({ answer });

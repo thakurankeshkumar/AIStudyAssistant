@@ -656,8 +656,8 @@ export default function Home() {
   };
 
   const handleAsk = async () => {
-    if (!question || !fileId) {
-      showStatus("Upload a PDF before asking a question.");
+    if (!question) {
+      showStatus("Enter a question first.");
       return;
     }
 
@@ -682,7 +682,7 @@ export default function Home() {
         },
         credentials: "include",
         body: JSON.stringify({
-          fileId,
+          fileId: fileId || undefined,
           question,
           chatId,
         }),

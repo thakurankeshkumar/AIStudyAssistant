@@ -97,7 +97,7 @@ export default function LoginPage() {
 								value={username}
 								onChange={(event) => setUsername(event.target.value)}
 								className="w-full rounded-lg border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-[#f0b35e] focus:shadow-[0_0_0_3px_rgba(240,179,94,0.12)]"
-								placeholder="ankesh"
+								placeholder="Enter your username"
 								autoComplete="username"
 							/>
 						</label>

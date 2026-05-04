@@ -130,7 +130,7 @@ export default function SignupPage() {
 								value={name}
 								onChange={(event) => setName(event.target.value)}
 								className="w-full rounded-lg border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-[#f0b35e] focus:shadow-[0_0_0_3px_rgba(240,179,94,0.12)]"
-								placeholder="Ankesh Kumar"
+								placeholder="Enter your name"
 								autoComplete="name"
 							/>
 						</label>
@@ -142,7 +142,7 @@ export default function SignupPage() {
 								value={username}
 								onChange={(event) => setUsername(event.target.value)}
 								className="w-full rounded-lg border border-white/10 bg-[#101624] px-4 py-3 text-white outline-none transition placeholder:text-white/35 hover:border-white/20 focus:border-[#f0b35e] focus:shadow-[0_0_0_3px_rgba(240,179,94,0.12)]"
-								placeholder="ankesh"
+								placeholder="Choose a unique username"
 								autoComplete="username"
 							/>
 						</label>
@@ -170,11 +170,10 @@ export default function SignupPage() {
 								{["", "", ""].map((_, index) => (
 									<span
 										key={index}
-										className={`h-1.5 rounded-full transition ${
-											password.length > index * 3
+										className={`h-1.5 rounded-full transition ${password.length > index * 3
 												? "bg-amber-300"
 												: "bg-white/10"
-										}`}
+											}`}
 									/>
 								))}
 							</div>

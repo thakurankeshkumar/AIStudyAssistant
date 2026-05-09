@@ -38,6 +38,22 @@ function previewMessage(messages) {
   return firstUserMessage.content;
 }
 
+async function readJsonResponse(response) {
+  const text = await response.text();
+
+  if (!text) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      error: response.ok ? "Invalid server response." : "Server returned an invalid response.",
+    };
+  }
+}
+
 function getWelcomeCopy(name) {
   const hour = new Date().getHours();
   const safeName = name || "there";
@@ -560,7 +576,7 @@ export default function Home() {
         credentials: "include",
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse(response);
 
       if (response.status === 401) {
         window.location.assign("/login");
@@ -651,7 +667,7 @@ export default function Home() {
         }),
       });
 
-      const chatData = await chatResponse.json();
+      const chatData = await readJsonResponse(chatResponse);
 
       if (chatResponse.status === 401) {
         window.location.assign("/login");

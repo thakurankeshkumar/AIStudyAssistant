@@ -2,8 +2,59 @@ import { connectDB } from "@/lib/db";
 import Document from "@/models/Document";
 import User from "@/models/User";
 import { getUserFromRequest } from "@/lib/auth";
-import { PDFParse } from "pdf-parse";
-import "pdfjs-dist/legacy/build/pdf.worker.mjs";
+
+export const runtime = "nodejs";
+
+class ServerDOMMatrix {
+    constructor(init) {
+        const values = Array.isArray(init) ? init : [];
+
+        this.a = Number(values[0] ?? 1);
+        this.b = Number(values[1] ?? 0);
+        this.c = Number(values[2] ?? 0);
+        this.d = Number(values[3] ?? 1);
+        this.e = Number(values[4] ?? 0);
+        this.f = Number(values[5] ?? 0);
+    }
+
+    multiplySelf() {
+        return this;
+    }
+
+    preMultiplySelf() {
+        return this;
+    }
+
+    translate() {
+        return this;
+    }
+
+    scale() {
+        return this;
+    }
+
+    invertSelf() {
+        return this;
+    }
+}
+
+async function loadPDFParse() {
+    try {
+        const canvas = await import("@napi-rs/canvas");
+
+        globalThis.DOMMatrix ??= canvas.DOMMatrix;
+        globalThis.ImageData ??= canvas.ImageData;
+        globalThis.Path2D ??= canvas.Path2D;
+    } catch {
+        globalThis.DOMMatrix ??= ServerDOMMatrix;
+    }
+
+    await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+
+    const { PDFParse } = await import("pdf-parse");
+
+    return PDFParse;
+}
 
 export async function POST(req) {
     try {
@@ -79,6 +130,7 @@ export async function POST(req) {
         let text;
 
         try {
+            const PDFParse = await loadPDFParse();
             parser = new PDFParse({ data: buffer });
             const data = await parser.getText();
             await parser.destroy();
